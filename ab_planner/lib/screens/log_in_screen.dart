@@ -7,7 +7,6 @@ class LogInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1F),
       body: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(35.0),
@@ -36,17 +35,15 @@ class LogInScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
                       letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 24),
                   TextField(
-                    style: const TextStyle(color: Colors.white),
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.email, color: Colors.white70),
                       labelText: 'Email ID',
-                      labelStyle: TextStyle(color: Colors.white70),
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.white38),
                       ),
@@ -107,7 +104,7 @@ class LogInScreen extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        onPressed: () {},
+                        onPressed: () {} ,//TODO zrobić nawigację do ekranu rejestracji,
                         child: const Text('Sign Up'),
                       ),
                     ],

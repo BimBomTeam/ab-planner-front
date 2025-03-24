@@ -1,7 +1,9 @@
+import 'package:ab_planner/models/lesson.dart';
+import 'package:ab_planner/screens/log_in_screen.dart';
+import 'package:ab_planner/widgets/lesson_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';  
-
+import 'package:intl/date_symbol_data_local.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     initializeDateFormatting('pl_PL', null); // załaduj dane PL
   }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -36,11 +39,20 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('EEEE, d MMMM yyyy', 'pl_PL').format(_selectedDate);
+    final formattedDate = DateFormat(
+      'EEEE, d MMMM',
+      'pl_PL',
+    ).format(_selectedDate);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Zajęcia ($formattedDate)'),
+        leading: IconButton(
+          icon: Icon(Icons.login),
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => LogInScreen(),));
+          },
+        ),
+        title: Text('Zajęcia ($formattedDate)', style: TextStyle(fontSize: 17)),
         actions: [
           IconButton(
             icon: Icon(Icons.calendar_today),
@@ -52,16 +64,15 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: ListView.builder(
         itemCount: 5,
-        itemBuilder: (context, index) => ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.grey.shade300,
-            child: Icon(Icons.image),
-          ),
-          title: Text('List item'),
-          subtitle: Text(
-              'lorem ipsum dolor sit amet, consectetur.'),
-          trailing: Icon(Icons.more_vert),
-        ),
+        itemBuilder:
+            (context, index) => LessonItem(
+              lesson: Lesson(
+                id: 'id',
+                title: 'title',
+                description: 'description',
+                content: 'content',
+              ),
+            ),
       ),
     );
   }
