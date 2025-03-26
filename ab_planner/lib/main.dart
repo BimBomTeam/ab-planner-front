@@ -11,61 +11,60 @@ void main() {
 
 final ThemeData customLoginTheme = ThemeData(
   brightness: Brightness.dark,
-  scaffoldBackgroundColor: Color(0xFF0A0A1F), // ciemne tło
+  scaffoldBackgroundColor: const Color(0xFF0A0A1F),
 
-  inputDecorationTheme: InputDecorationTheme(
-    filled: false,
+  inputDecorationTheme: const InputDecorationTheme(
+    prefixIconColor: Colors.white70,
+    labelStyle: TextStyle(color: Colors.white70),
     hintStyle: TextStyle(color: Colors.white70),
     enabledBorder: UnderlineInputBorder(
-      borderSide: BorderSide(color: Colors.white30),
+      borderSide: BorderSide(color: Colors.white38),
     ),
     focusedBorder: UnderlineInputBorder(
       borderSide: BorderSide(color: Colors.white),
     ),
-    prefixIconColor: Colors.white,
   ),
 
-  textTheme: TextTheme(
+  textTheme: const TextTheme(
     bodyMedium: TextStyle(color: Colors.white),
     labelLarge: TextStyle(color: Colors.white),
     titleLarge: TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 22,
+      fontSize: 26,
+      letterSpacing: 1.2,
       color: Colors.white,
     ),
+    bodySmall: TextStyle(color: Colors.white70, fontSize: 14),
   ),
 
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Color(0xFF6C00FF), // fiolet
+      backgroundColor: Color(0xFF3A0CA3),
+      foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: EdgeInsets.symmetric(vertical: 14),
-      textStyle: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      textStyle: TextStyle(fontWeight: FontWeight.bold),
     ),
   ),
 
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
-      side: BorderSide(color: Colors.white),
+      backgroundColor: Colors.transparent,
+      foregroundColor: Colors.white,
+      side: const BorderSide(color: Colors.white30),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      foregroundColor: Colors.white,
-      padding: EdgeInsets.symmetric(vertical: 14),
-      textStyle: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      textStyle: const TextStyle(fontWeight: FontWeight.bold),
     ),
   ),
 
-  iconTheme: IconThemeData(color: Colors.white70),
+  iconTheme: const IconThemeData(color: Colors.white70),
 );
+
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -73,6 +72,9 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context, child) {
+    return SafeArea(child: child!);
+  },
       theme: customLoginTheme,
       localizationsDelegates:  const [
         GlobalMaterialLocalizations.delegate,
@@ -83,7 +85,7 @@ class MainApp extends StatelessWidget {
         Locale('pl', 'PL'), 
         Locale('en', 'US'), 
       ],
-      home: const MainScreen(),
+      home: SafeArea(child: const MainScreen()),
     );
   }
 }

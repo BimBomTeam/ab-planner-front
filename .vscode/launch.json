@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ab_planner",
+            "cwd": "ab_planner",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "ab_planner (profile mode)",
+            "cwd": "ab_planner",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "ab_planner (release mode)",
+            "cwd": "ab_planner",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
