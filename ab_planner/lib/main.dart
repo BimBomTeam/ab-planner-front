@@ -1,5 +1,3 @@
-
-import 'package:ab_planner/screens/log_in_screen.dart';
 import 'package:ab_planner/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
