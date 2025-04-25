@@ -1,8 +1,86 @@
-import 'package:ab_planner/screens/sign_up_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LogInScreen extends StatelessWidget {
+import 'package:ab_planner/screens/sign_up_screen.dart';
+import 'package:ab_planner/screens/main_screen.dart';
+
+class LogInScreen extends StatefulWidget {
   const LogInScreen({super.key});
+
+  @override
+  State<LogInScreen> createState() => _LogInScreenState();
+}
+
+class _LogInScreenState extends State<LogInScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _logIn(BuildContext context) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Proszę wypełnić wszystkie pola');
+      return;
+    }
+
+    final url = Uri.parse('http://localhost:3000/api/users/login');
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final token = data['token'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      } else {
+        final data = json.decode(response.body);
+        _showError(data['error'] ?? 'Niepoprawne dane logowania');
+      }
+    } catch (e) {
+      _showError('Błąd połączenia z serwerem');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Błąd'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +102,6 @@ class LogInScreen extends StatelessWidget {
           ),
           child: Stack(
             children: [
-    
               Positioned(
                 top: 12,
                 left: 12,
@@ -35,7 +112,6 @@ class LogInScreen extends StatelessWidget {
                   },
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
                 child: Column(
@@ -43,48 +119,41 @@ class LogInScreen extends StatelessWidget {
                   children: [
                     Text('Log In', style: theme.textTheme.titleLarge),
                     const SizedBox(height: 24),
-
                     TextField(
+                      controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.email),
                         labelText: 'Email ID',
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     TextField(
+                      controller: _passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.lock),
                         labelText: 'Password',
                       ),
                     ),
-
                     const SizedBox(height: 35),
-
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            // TODO: Implement log in functionality
-                          },
-                          child: const Text('Log In'),
+                          onPressed: _isLoading ? null : () => _logIn(context),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Log In'),
                         ),
-
                         const SizedBox(height: 12),
-
                         Center(
                           child: Text(
                             'Nie masz konta?',
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         OutlinedButton(
                           onPressed: () {
                             Navigator.push(
@@ -106,4 +175,3 @@ class LogInScreen extends StatelessWidget {
     );
   }
 }
-
