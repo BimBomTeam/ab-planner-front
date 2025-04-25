@@ -49,10 +49,7 @@ class _LogInScreenState extends State<LogInScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+        _showSuccess('Zalogowano pomyślnie!');
       } else {
         final data = json.decode(response.body);
         _showError(data['error'] ?? 'Niepoprawne dane logowania');
@@ -75,6 +72,28 @@ class _LogInScreenState extends State<LogInScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sukces'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            },
             child: const Text('OK'),
           ),
         ],

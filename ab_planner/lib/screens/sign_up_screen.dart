@@ -64,10 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+        _showSuccess('Rejestracja zakończona sukcesem!');
       } else {
         final data = json.decode(response.body);
         _showError(data['error'] ?? 'Błąd rejestracji');
@@ -90,6 +87,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sukces'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            },
             child: const Text('OK'),
           ),
         ],
@@ -121,10 +140,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Create Your Account',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('Create Your Account', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _firstNameController,
@@ -132,10 +148,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       labelText: 'First Name',
                       filled: true,
                       fillColor: Colors.white10,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -145,10 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       labelText: 'Last Name',
                       filled: true,
                       fillColor: Colors.white10,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -158,10 +168,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       labelText: 'Email',
                       filled: true,
                       fillColor: Colors.white10,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -172,10 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       labelText: 'Password',
                       filled: true,
                       fillColor: Colors.white10,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -186,10 +190,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       labelText: 'Re-enter Password',
                       filled: true,
                       fillColor: Colors.white10,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                        borderSide: BorderSide.none,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                     ),
                   ),
                   const SizedBox(height: 30),
