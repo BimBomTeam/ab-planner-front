@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/screens/main_screen.dart';
 import 'package:ab_planner/screens/sign_up_screen.dart';
 import 'package:ab_planner/services/auth_service.dart';
