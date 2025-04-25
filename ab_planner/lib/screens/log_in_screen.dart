@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:ab_planner/screens/sign_up_screen.dart';
 import 'package:ab_planner/screens/main_screen.dart';
+import 'package:ab_planner/screens/sign_up_screen.dart';
+import 'package:ab_planner/services/auth_service.dart';
 
 class LogInScreen extends StatefulWidget {
   const LogInScreen({super.key});
@@ -27,35 +25,17 @@ class _LogInScreenState extends State<LogInScreen> {
       return;
     }
 
-    final url = Uri.parse('http://localhost:3000/api/users/login');
-
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'password': password}),
-      );
+      await AuthService.login(email, password);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final token = data['token'];
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-
-        if (!mounted) return;
-
-        _showSuccess('Zalogowano pomyślnie!');
-      } else {
-        final data = json.decode(response.body);
-        _showError(data['error'] ?? 'Niepoprawne dane logowania');
-      }
+      if (!mounted) return;
+      _showSuccess('Zalogowano pomyślnie!');
     } catch (e) {
-      _showError('Błąd połączenia z serwerem');
+      _showError(e.toString().replaceAll('Exception:', '').trim());
     } finally {
       setState(() {
         _isLoading = false;

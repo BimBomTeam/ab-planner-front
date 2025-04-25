@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:ab_planner/screens/main_screen.dart';
+import 'package:ab_planner/services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -37,40 +34,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final url = Uri.parse('http://localhost:3000/api/users/register');
-
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'first_name': firstName,
-          'last_name': lastName,
-          'email': email,
-          'password': password,
-        }),
-      );
+      await AuthService.register(firstName, lastName, email, password);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final token = data['token'];
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-
-        if (!mounted) return;
-
-        _showSuccess('Rejestracja zakończona sukcesem!');
-      } else {
-        final data = json.decode(response.body);
-        _showError(data['error'] ?? 'Błąd rejestracji');
-      }
+      if (!mounted) return;
+      _showSuccess('Rejestracja zakończona sukcesem!');
     } catch (e) {
-      _showError('Błąd połączenia z serwerem');
+      _showError(e.toString().replaceAll('Exception:', '').trim());
     } finally {
       setState(() {
         _isLoading = false;
