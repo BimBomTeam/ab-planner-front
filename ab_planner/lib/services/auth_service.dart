@@ -49,4 +49,18 @@ class AuthService {
       throw Exception(data['error'] ?? 'Błąd rejestracji');
     }
   }
+  static Future<void> resetPassword(String email) async {
+  final url = Uri.parse('$_baseUrl/reset-password');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({'email': email}),
+  );
+
+  if (response.statusCode != 200) {
+    final data = json.decode(response.body);
+    throw Exception(data['error'] ?? 'Błąd resetowania hasła');
+  }
+}
+
 }
