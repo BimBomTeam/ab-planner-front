@@ -13,7 +13,9 @@ class LogInScreen extends StatefulWidget {
 class _LogInScreenState extends State<LogInScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _resetEmailController = TextEditingController();
   bool _isLoading = false;
+  bool _isResetLoading = false;
 
   Future<void> _logIn(BuildContext context) async {
     final email = _emailController.text.trim();
@@ -40,6 +42,66 @@ class _LogInScreenState extends State<LogInScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _resetEmailController.text.trim();
+
+    if (email.isEmpty) {
+      _showError('Proszę podać adres email');
+      return;
+    }
+
+    setState(() {
+      _isResetLoading = true;
+    });
+
+    try {
+      await AuthService.resetPassword(email);
+      if (!mounted) return;
+      Navigator.of(context).pop(); // zamyka modal
+      _showSuccess('Link do resetu hasła został wysłany na email.');
+    } catch (e) {
+      _showError(e.toString().replaceAll('Exception:', '').trim());
+    } finally {
+      setState(() {
+        _isResetLoading = false;
+      });
+    }
+  }
+
+  void _showResetPasswordModal() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Resetuj hasło'),
+          content: TextField(
+            controller: _resetEmailController,
+            decoration: const InputDecoration(
+              labelText: 'Podaj email',
+              prefixIcon: Icon(Icons.email),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Anuluj'),
+            ),
+            ElevatedButton(
+              onPressed: _isResetLoading ? null : _resetPassword,
+              child: _isResetLoading
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Wyślij'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showError(String message) {
@@ -89,7 +151,7 @@ class _LogInScreenState extends State<LogInScreen> {
       body: Center(
         child: Container(
           width: 350,
-          height: 500,
+          height: 550,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF1A1F38), Color(0xFF3A0CA3)],
@@ -134,7 +196,18 @@ class _LogInScreenState extends State<LogInScreen> {
                         labelText: 'Password',
                       ),
                     ),
-                    const SizedBox(height: 35),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _showResetPasswordModal,
+                        child: const Text(
+                          'Zapomniałeś hasło?',
+                          style: TextStyle(decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

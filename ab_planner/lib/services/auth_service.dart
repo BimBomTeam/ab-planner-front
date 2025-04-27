@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String _baseUrl = 'http://10.0.2.2:3000/api/users';
+  static const String _baseUrl = 'http://localhost:3000/api/users';
 
   static Future<String?> login(String email, String password) async {
     final url = Uri.parse('$_baseUrl/login');
@@ -49,4 +49,18 @@ class AuthService {
       throw Exception(data['error'] ?? 'Błąd rejestracji');
     }
   }
+  static Future<void> resetPassword(String email) async {
+  final url = Uri.parse('$_baseUrl/reset-password');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({'email': email}),
+  );
+
+  if (response.statusCode != 200) {
+    final data = json.decode(response.body);
+    throw Exception(data['error'] ?? 'Błąd resetowania hasła');
+  }
+}
+
 }
