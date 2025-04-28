@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
 
 class UserService {
-  static const String _baseUrl = 'http://localhost:3000/api';
+  static const String _baseUrl = 'http://10.0.2.2:3000/api';
 
   static Future<List<GroupModel>> fetchGroups(String startYear) async {
     final encodedYear = Uri.encodeComponent(startYear);
@@ -52,4 +52,17 @@ class UserService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
   }
+  
+static Future<List<String>> fetchMajors() async {
+  final url = Uri.parse('$_baseUrl/majors');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body) as List;
+    return data.map((major) => major['name'] as String).toList();
+  } else {
+    throw Exception('Błąd ładowania kierunków');
+  }
+}
+
 }

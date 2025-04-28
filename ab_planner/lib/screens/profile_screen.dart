@@ -3,9 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
 import 'package:ab_planner/screens/main_screen.dart';
 import 'package:ab_planner/utils/jwt_decoder.dart';
-import 'package:ab_planner/services/user_service.dart'; // <--- nasz nowy serwis
-import 'dart:convert';
 import 'package:ab_planner/services/user_service.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,18 +18,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  final List<String> _fieldsOfStudy = ['Informatyka', 'Zarządzanie', 'Ekonomia'];
+  List<String> _fieldsOfStudy = [];
   String? _selectedFieldOfStudy;
   String? _selectedYear;
   GroupModel? _selectedGroup;
-
   List<String> _years = ["2023/24", "2022/23", "2021/22"];
   List<GroupModel> _groups = [];
+
+  bool _isLoadingMajors = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadMajors();
   }
 
   Future<void> _loadUserData() async {
@@ -43,6 +44,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _firstNameController.text = payload['first_name'] ?? '';
         _lastNameController.text = payload['last_name'] ?? '';
         _emailController.text = payload['email'] ?? '';
+      });
+    }
+  }
+
+  Future<void> _loadMajors() async {
+    try {
+      final majors = await UserService.fetchMajors();
+      setState(() {
+        _fieldsOfStudy = majors;
+        _isLoadingMajors = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Błąd ładowania kierunków')),
+      );
+      setState(() {
+        _isLoadingMajors = false;
       });
     }
   }
@@ -133,35 +151,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               enabled: false,
             ),
             const Divider(height: 32),
-            DropdownButtonFormField<String>(
-              value: _selectedFieldOfStudy,
-              hint: const Text('Wybierz kierunek'),
-              items: _fieldsOfStudy
-                  .map((field) => DropdownMenuItem(
-                        value: field,
-                        child: Text(field),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedFieldOfStudy = value;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Kierunek studiów',
-              ),
-            ),
+            _isLoadingMajors
+              ? const Center(child: CircularProgressIndicator())
+              : DropdownButtonFormField<String>(
+                  value: _selectedFieldOfStudy,
+                  hint: const Text('Wybierz kierunek'),
+                  items: _fieldsOfStudy.map((field) {
+                    return DropdownMenuItem(
+                      value: field,
+                      child: Text(field),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedFieldOfStudy = value;
+                      _selectedYear = null;
+                      _groups = [];
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Kierunek studiów',
+                  ),
+                ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedYear,
               hint: const Text('Wybierz rocznik'),
-              items: _years
-                  .map((year) => DropdownMenuItem(
-                        value: year,
-                        child: Text(year),
-                      ))
-                  .toList(),
-              onChanged: (year) {
+              items: _years.map((year) {
+                return DropdownMenuItem(
+                  value: year,
+                  child: Text(year),
+                );
+              }).toList(),
+              onChanged: _selectedFieldOfStudy == null ? null : (year) {
                 if (year != null) {
                   setState(() {
                     _selectedYear = year;
