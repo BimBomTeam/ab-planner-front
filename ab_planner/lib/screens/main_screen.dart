@@ -1,6 +1,7 @@
 import 'package:ab_planner/models/lesson.dart';
 import 'package:ab_planner/screens/log_in_screen.dart';
 import 'package:ab_planner/screens/profile_screen.dart';
+import 'package:ab_planner/screens/add_lesson_screen.dart'; // <--- pamiętaj o imporcie!
 import 'package:ab_planner/widgets/lesson_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('pl_PL', null); // Inicjalizacja daty w PL
+    initializeDateFormatting('pl_PL', null);
     _checkLoginStatus();
   }
 
@@ -85,7 +86,7 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       body: ListView.builder(
-        itemCount: 5, // Docelowo pewnie będzie dynamicznie pobierane z API
+        itemCount: 5,
         itemBuilder: (context, index) => LessonItem(
           lesson: Lesson(
             id: 'id',
@@ -95,6 +96,19 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       ),
+      floatingActionButton: _isLoggedIn
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddLessonScreen()),
+                );
+              },
+              child: const Icon(Icons.add, size: 32),
+              backgroundColor: Colors.deepPurpleAccent,
+              shape: const CircleBorder(),
+            )
+          : null,
     );
   }
 }

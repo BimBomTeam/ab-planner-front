@@ -80,6 +80,7 @@ class _LogInScreenState extends State<LogInScreen> {
             controller: _resetEmailController,
             decoration: const InputDecoration(
               labelText: 'Podaj email',
+              suffixText: '@stud.akademiabialska.pl',
               prefixIcon: Icon(Icons.email),
             ),
           ),
@@ -90,13 +91,17 @@ class _LogInScreenState extends State<LogInScreen> {
             ),
             ElevatedButton(
               onPressed: _isResetLoading ? null : _resetPassword,
-              child: _isResetLoading
-                  ? const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Wyślij'),
+              child:
+                  _isResetLoading
+                      ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Text('Wyślij'),
             ),
           ],
         );
@@ -107,38 +112,40 @@ class _LogInScreenState extends State<LogInScreen> {
   void _showError(String message) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Błąd'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Błąd'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showSuccess(String message) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sukces'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
-              );
-            },
-            child: const Text('OK'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Sukces'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                  );
+                },
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -182,9 +189,11 @@ class _LogInScreenState extends State<LogInScreen> {
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.email),
-                        labelText: 'Email ID',
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.email),
+                        labelText: 'Email',
+                        suffixText: '@stud.akademiabialska.pl',
+                        suffixStyle: const TextStyle(color: Colors.white70),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -198,24 +207,29 @@ class _LogInScreenState extends State<LogInScreen> {
                     ),
                     const SizedBox(height: 12),
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: Alignment.center,
                       child: TextButton(
                         onPressed: _showResetPasswordModal,
                         child: const Text(
                           'Zapomniałeś hasło?',
-                          style: TextStyle(decoration: TextDecoration.underline),
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ElevatedButton(
                           onPressed: _isLoading ? null : () => _logIn(context),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Log In'),
+                          child:
+                              _isLoading
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : const Text('Log In'),
                         ),
                         const SizedBox(height: 12),
                         Center(
@@ -229,7 +243,9 @@ class _LogInScreenState extends State<LogInScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpScreen(),
+                              ),
                             );
                           },
                           child: const Text('Sign Up'),
