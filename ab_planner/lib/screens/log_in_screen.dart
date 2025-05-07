@@ -192,7 +192,7 @@ class _LogInScreenState extends State<LogInScreen> {
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.email),
                         labelText: 'Email',
-                        suffixText: '@stud.akademiabialska.pl',
+                        //suffixText: '@stud.akademiabialska.pl',
                         suffixStyle: const TextStyle(color: Colors.white70),
                       ),
                     ),

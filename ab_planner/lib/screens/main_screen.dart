@@ -1,7 +1,8 @@
 import 'package:ab_planner/models/lesson.dart';
 import 'package:ab_planner/screens/log_in_screen.dart';
 import 'package:ab_planner/screens/profile_screen.dart';
-import 'package:ab_planner/screens/add_lesson_screen.dart'; // <--- pamiętaj o imporcie!
+import 'package:ab_planner/screens/add_lesson_screen.dart';
+import 'package:ab_planner/services/lesson_service.dart'; // <-- dodaj import!
 import 'package:ab_planner/widgets/lesson_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,12 +19,15 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   DateTime _selectedDate = DateTime.now();
   bool _isLoggedIn = false;
+  bool _isLoadingLessons = false;
+  List<Lesson> _lessons = [];
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('pl_PL', null);
     _checkLoginStatus();
+    _loadLessons();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -32,6 +36,25 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _isLoggedIn = token != null;
     });
+  }
+
+  Future<void> _loadLessons() async {
+    setState(() {
+      _isLoadingLessons = true;
+    });
+
+    try {
+      final lessons = await LessonService.getLessons();
+      setState(() {
+        _lessons = lessons;
+      });
+    } catch (e) {
+      print('Błąd podczas pobierania lekcji: $e');
+    } finally {
+      setState(() {
+        _isLoadingLessons = false;
+      });
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -85,28 +108,28 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: 5,
-        itemBuilder: (context, index) => LessonItem(
-          lesson: Lesson(
-            id: 'id',
-            title: 'title',
-            description: 'description',
-            content: 'content',
-          ),
-        ),
-      ),
+      body: _isLoadingLessons
+          ? const Center(child: CircularProgressIndicator())
+          : _lessons.isEmpty
+              ? const Center(child: Text('Brak zajęć.'))
+              : ListView.builder(
+                  itemCount: _lessons.length,
+                  itemBuilder: (context, index) => LessonItem(
+                    lesson: _lessons[index],
+                  ),
+                ),
       floatingActionButton: _isLoggedIn
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AddLessonScreen()),
                 );
+                _loadLessons(); // <- po powrocie odśwież lekcje
               },
-              child: const Icon(Icons.add, size: 32),
               backgroundColor: Colors.deepPurpleAccent,
               shape: const CircleBorder(),
+              child: const Icon(Icons.add, size: 32),
             )
           : null,
     );

@@ -140,7 +140,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      suffixText: '@stud.akademiabialska.pl',
+                      //suffixText: '@stud.akademiabialska.pl',
                       filled: true,
                       fillColor: Colors.white10,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
