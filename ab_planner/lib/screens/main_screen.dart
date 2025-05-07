@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ab_planner/utils/jwt_decoder.dart'; // <-- do dekodowania tokenu
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,6 +23,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _isLoggedIn = false;
   bool _isLoadingLessons = false;
   List<Lesson> _lessons = [];
+  String? _userRole;
 
   @override
   void initState() {
@@ -31,11 +34,29 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+      final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  if (token != null) {
+    try {
+      final payload = parseJwt(token);
+      setState(() {
+        _isLoggedIn = true;
+        _userRole = payload['role'];
+      });
+    } catch (e) {
+      print('Błąd dekodowania JWT: $e');
+      setState(() {
+        _isLoggedIn = false;
+        _userRole = null;
+      });
+    }
+  } else {
     setState(() {
-      _isLoggedIn = token != null;
+      _isLoggedIn = false;
+      _userRole = null;
     });
+  }
   }
 
   Future<void> _loadLessons() async {
@@ -118,20 +139,20 @@ class _MainScreenState extends State<MainScreen> {
                     lesson: _lessons[index],
                   ),
                 ),
-      floatingActionButton: _isLoggedIn
-          ? FloatingActionButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddLessonScreen()),
-                );
-                _loadLessons(); // <- po powrocie odśwież lekcje
-              },
-              backgroundColor: Colors.deepPurpleAccent,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, size: 32),
-            )
-          : null,
+      floatingActionButton: (_isLoggedIn && _userRole == 'admin')
+    ? FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddLessonScreen()),
+          );
+          _loadLessons();
+        },
+        backgroundColor: Colors.deepPurpleAccent,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 32),
+      )
+    : null,
     );
   }
 }

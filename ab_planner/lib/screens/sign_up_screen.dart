@@ -17,40 +17,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _confirmController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _register(BuildContext context) async {
-    final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmController.text.trim();
+ Future<void> _register(BuildContext context) async {
+  final firstName = _firstNameController.text.trim();
+  final lastName = _lastNameController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+  final confirmPassword = _confirmController.text.trim();
 
-    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      _showError('Wypełnij wszystkie pola');
-      return;
-    }
-
-    if (password != confirmPassword) {
-      _showError('Hasła nie są takie same');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await AuthService.register(firstName, lastName, email, password);
-
-      if (!mounted) return;
-      _showSuccess('Rejestracja zakończona sukcesem!');
-    } catch (e) {
-      _showError(e.toString().replaceAll('Exception:', '').trim());
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    _showError('Wypełnij wszystkie pola');
+    return;
   }
+
+  if (!email.contains('@') || !email.contains('.')) {
+    _showError('Podaj poprawny adres e-mail');
+    return;
+  }
+
+  if (password.length < 8) {
+    _showError('Hasło musi mieć co najmniej 8 znaków');
+    return;
+  }
+
+  if (password != confirmPassword) {
+    _showError('Hasła nie są takie same');
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    await AuthService.register(firstName, lastName, email, password);
+
+    if (!mounted) return;
+    _showSuccess('Rejestracja zakończona sukcesem!');
+  } catch (e) {
+    _showError(e.toString().replaceAll('Exception:', '').trim());
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+
 
   void _showError(String message) {
     showDialog(
