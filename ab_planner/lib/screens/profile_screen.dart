@@ -5,7 +5,6 @@ import 'package:ab_planner/screens/main_screen.dart';
 import 'package:ab_planner/utils/jwt_decoder.dart';
 import 'package:ab_planner/services/user_service.dart';
 
-
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -26,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<GroupModel> _groups = [];
 
   bool _isLoadingMajors = true;
+  int? _userId;
 
   @override
   void initState() {
@@ -40,11 +40,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (token != null) {
       final payload = parseJwt(token);
+      _userId = payload['id'];
+      final groupId = payload['group_id'];
+
       setState(() {
         _firstNameController.text = payload['first_name'] ?? '';
         _lastNameController.text = payload['last_name'] ?? '';
         _emailController.text = payload['email'] ?? '';
       });
+
+      if (groupId != null) {
+        try {
+          final group = await UserService.fetchGroupById(groupId);
+          setState(() {
+            _selectedGroup = group;
+            _selectedFieldOfStudy = group.majorName;
+            _selectedYear = group.startYear;
+          });
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Błąd ładowania grupy użytkownika')),
+          );
+        }
+      }
     }
   }
 
@@ -80,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_selectedFieldOfStudy == null || _selectedYear == null || _selectedGroup == null) {
+    if (_selectedGroup == null || _userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Uzupełnij wszystkie dane')),
       );
@@ -89,11 +107,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       await UserService.saveProfile(
+        userId: _userId!,
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
-        email: _emailController.text,
-        fieldOfStudy: _selectedFieldOfStudy!,
-        startYear: _selectedYear!,
         groupId: _selectedGroup!.id,
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,27 +168,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const Divider(height: 32),
             _isLoadingMajors
-              ? const Center(child: CircularProgressIndicator())
-              : DropdownButtonFormField<String>(
-                  value: _selectedFieldOfStudy,
-                  hint: const Text('Wybierz kierunek'),
-                  items: _fieldsOfStudy.map((field) {
-                    return DropdownMenuItem(
-                      value: field,
-                      child: Text(field),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFieldOfStudy = value;
-                      _selectedYear = null;
-                      _groups = [];
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Kierunek studiów',
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    value: _selectedFieldOfStudy,
+                    hint: const Text('Wybierz kierunek'),
+                    items: _fieldsOfStudy.map((field) {
+                      return DropdownMenuItem(
+                        value: field,
+                        child: Text(field),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFieldOfStudy = value;
+                        // czyszczenie zależnych pól
+                        _selectedYear = null;
+                        _selectedGroup = null;
+                        _groups = [];
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Kierunek studiów',
+                    ),
                   ),
-                ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               value: _selectedYear,
@@ -183,10 +201,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Text(year),
                 );
               }).toList(),
-              onChanged: _selectedFieldOfStudy == null ? null : (year) {
+              onChanged: (year) {
                 if (year != null) {
                   setState(() {
                     _selectedYear = year;
+                    _selectedGroup = null;
                   });
                   _fetchGroups(year);
                 }

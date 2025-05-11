@@ -3,12 +3,14 @@ class GroupModel {
   final String startYear;
   final int groupNumber;
   final String groupName;
+  final String? majorName; // NOWE!
 
   GroupModel({
     required this.id,
     required this.startYear,
     required this.groupNumber,
     required this.groupName,
+    this.majorName,
   });
 
   factory GroupModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class GroupModel {
       startYear: json['start_year'],
       groupNumber: json['group_number'],
       groupName: json['group_name'],
+      majorName: json['Major']
     );
   }
 }
