@@ -13,26 +13,31 @@ class LessonDetailsScreen extends StatelessWidget {
     final timeFormat = DateFormat.Hm();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Szczegóły zajęć'),
-      ),
+      appBar: AppBar(title: const Text('Szczegóły zajęć')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('🧠 ${lesson.title}', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              '🧠 ${lesson.title}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Text('📅 Data: ${dateFormat.format(lesson.start)}'),
-            Text('🕒 Czas: ${timeFormat.format(lesson.start)} – ${timeFormat.format(lesson.end)}'),
+            Text(
+              '🕒 Czas: ${timeFormat.format(lesson.start)} – ${timeFormat.format(lesson.end)}',
+            ),
             Text('🏫 Sala: ${lesson.room}'),
-            Text('👨‍🏫 Nauczyciel ID: ${lesson.teacherId}'),
-            Text('📚 Typ zajęć ID: ${lesson.lessonTypeId}'),
-            Text('👥 Grupa ID: ${lesson.groupId}'),
+            const SizedBox(height: 16),
+            Text('👨‍🏫 Prowadzący: ${lesson.teacherName ?? "Nieznany"}'),
+            Text('📚 Typ zajęć: ${lesson.lessonTypeName ?? "Brak"}'),
+            Text(
+              '👥 Grupa: ${lesson.groupName ?? "Brak"} (${lesson.groupNumber ?? "-"})',
+            ),
             const SizedBox(height: 24),
-            Text('📌 ID lekcji: ${lesson.id}'),
-            Text('🕐 Utworzono: ${lesson.createdAt.toLocal()}'),
-            Text('🔄 Zmieniono: ${lesson.updatedAt.toLocal()}'),
+            Text('🔁 Częstotliwość: ${lesson.frequency ?? "-"}'),
+            Text('🗓️ Semestr: ${lesson.term ?? "-"}'),
           ],
         ),
       ),

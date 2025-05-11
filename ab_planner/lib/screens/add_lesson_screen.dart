@@ -11,12 +11,14 @@ class AddLessonScreen extends StatefulWidget {
 class _AddLessonScreenState extends State<AddLessonScreen> {
   final TextEditingController _roomController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  
+
   int? _selectedTeacherId;
   int? _selectedLessonTypeId;
   int? _selectedGroupId;
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _selectedFrequency;
+  String? _selectedTerm;
   bool _isLoading = false;
 
   final List<Map<String, dynamic>> _teachers = [
@@ -33,7 +35,11 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   final List<Map<String, dynamic>> _groups = [
     {'id': 1, 'name': 'Grupa 1'},
     {'id': 2, 'name': 'Grupa 2'},
+    {'id': 3, 'name': 'Grupa 3'},
   ];
+
+  final List<String> _frequencies = ['once', 'weekly', 'biweekly'];
+  final List<String> _terms = ['winter', 'summer'];
 
   Future<void> _selectStartDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
@@ -79,7 +85,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
     final room = _roomController.text.trim();
     final title = _titleController.text.trim();
 
-    if (room.isEmpty || title.isEmpty || _selectedTeacherId == null || _selectedLessonTypeId == null || _selectedGroupId == null || _startDate == null || _endDate == null) {
+    if (room.isEmpty || title.isEmpty || _selectedTeacherId == null || _selectedLessonTypeId == null || _selectedGroupId == null || _startDate == null || _endDate == null || _selectedFrequency == null || _selectedTerm == null) {
       _showError('Wypełnij wszystkie pola!');
       return;
     }
@@ -97,6 +103,8 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
         teacherId: _selectedTeacherId!,
         lessonTypeId: _selectedLessonTypeId!,
         groupId: _selectedGroupId!,
+        frequency: _selectedFrequency!,
+        term: _selectedTerm!,
       );
 
       if (!mounted) return;
@@ -136,7 +144,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              Navigator.pop(context); // zamyka ekran dodawania
+              Navigator.pop(context);
             },
             child: const Text('OK'),
           ),
@@ -199,6 +207,30 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
               }).toList(),
               onChanged: (value) => setState(() => _selectedGroupId = value),
               decoration: const InputDecoration(labelText: 'Grupa'),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedFrequency,
+              items: _frequencies.map((freq) {
+                return DropdownMenuItem<String>(
+                  value: freq,
+                  child: Text(freq),
+                );
+              }).toList(),
+              onChanged: (value) => setState(() => _selectedFrequency = value),
+              decoration: const InputDecoration(labelText: 'Częstotliwość'),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedTerm,
+              items: _terms.map((term) {
+                return DropdownMenuItem<String>(
+                  value: term,
+                  child: Text(term),
+                );
+              }).toList(),
+              onChanged: (value) => setState(() => _selectedTerm = value),
+              decoration: const InputDecoration(labelText: 'Semestr'),
             ),
             const SizedBox(height: 16),
             ListTile(
