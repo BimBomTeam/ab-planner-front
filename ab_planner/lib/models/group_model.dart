@@ -3,13 +3,15 @@ class GroupModel {
   final String startYear;
   final int groupNumber;
   final String groupName;
-  final String? majorName; // NOWE!
+  final int? majorId;
+  final String? majorName;
 
   GroupModel({
     required this.id,
     required this.startYear,
     required this.groupNumber,
     required this.groupName,
+    required this.majorId,
     this.majorName,
   });
 
@@ -19,7 +21,8 @@ class GroupModel {
       startYear: json['start_year'],
       groupNumber: json['group_number'],
       groupName: json['group_name'],
-      majorName: json['Major']
+      majorId: json['major_id'],
+      majorName: json['Major'] != null ? json['Major']['name'] : null,
     );
   }
 }

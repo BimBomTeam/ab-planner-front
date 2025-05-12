@@ -86,28 +86,94 @@ class UserService {
   /// Wylogowanie użytkownika
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    
     await prefs.remove('auth_token');
   }
 
   /// Pobiera listę kierunków studiów
-  static Future<List<String>> fetchMajors() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+  static Future<List<Map<String, dynamic>>> fetchMajorsWithIds() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
 
-    final url = Uri.parse('$_baseUrl/majors');
-    final response = await http.get(
-      url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
+  final url = Uri.parse('$_baseUrl/majors');
+  final response = await http.get(
+    url,
+    headers: {
+      if (token != null) 'Authorization': 'Bearer $token',
+    },
+  );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body) as List;
-      return data.map((major) => major['name'] as String).toList();
-    } else {
-      throw Exception('Błąd ładowania kierunków');
-    }
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body) as List;
+    return data.map((major) => {
+      'id': major['id'],
+      'name': major['name'],
+    }).toList();
+  } else {
+    throw Exception('Błąd ładowania kierunków');
   }
+}
+static Future<Map<String, dynamic>> fetchCurrentUser() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  final url = Uri.parse('$_baseUrl/users/me');
+  final response = await http.get(
+    url,
+    headers: {
+      if (token != null) 'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body) as Map<String, dynamic>;
+  } else {
+    throw Exception('Błąd pobierania danych użytkownika');
+  }
+}
+static Future<List<String>> fetchStartYears() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  final url = Uri.parse('$_baseUrl/groups');
+  final response = await http.get(
+    url,
+    headers: {
+      if (token != null) 'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body) as List;
+    // Wyciągnięcie unikalnych start_year
+    final years = data
+        .map((group) => group['start_year'] as String)
+        .toSet() // usuń duplikaty
+        .toList();
+    years.sort((a, b) => b.compareTo(a)); // posortuj malejąco np. 2024/25, 2023/24
+    return years;
+  } else {
+    throw Exception('Błąd ładowania roczników');
+  }
+}
+static Future<List<GroupModel>> fetchAllGroups() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  final url = Uri.parse('http://10.0.2.2:3000/api/groups');
+  final response = await http.get(
+    url,
+    headers: {
+      if (token != null) 'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body) as List;
+    return data.map((groupJson) => GroupModel.fromJson(groupJson)).toList();
+  } else {
+    throw Exception('Błąd ładowania grup');
+  }
+}
+
+
 }
