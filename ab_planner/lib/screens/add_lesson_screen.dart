@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ab_planner/services/lesson_service.dart';
+import 'package:ab_planner/services/lesson_form_service.dart';
 
 class AddLessonScreen extends StatefulWidget {
   const AddLessonScreen({super.key});
@@ -21,25 +22,40 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   String? _selectedTerm;
   bool _isLoading = false;
 
-  final List<Map<String, dynamic>> _teachers = [
-    {'id': 1, 'name': 'Jan Kowalski'},
-    {'id': 2, 'name': 'Anna Nowak'},
-  ];
+  List<Map<String, dynamic>> _teachers = [];
+  List<Map<String, dynamic>> _lessonTypes = [];
+  List<Map<String, dynamic>> _groups = [];
 
-  final List<Map<String, dynamic>> _lessonTypes = [
-    {'id': 1, 'name': 'Wykład'},
-    {'id': 2, 'name': 'Ćwiczenia'},
-    {'id': 3, 'name': 'Laboratorium'},
-  ];
-
-  final List<Map<String, dynamic>> _groups = [
-    {'id': 1, 'name': 'Grupa 1'},
-    {'id': 2, 'name': 'Grupa 2'},
-    {'id': 3, 'name': 'Grupa 3'},
-  ];
-
-  final List<String> _frequencies = ['once', 'weekly', 'biweekly'];
+  final List<String> _frequencies = [ 'weekly', 'biweekly'];
   final List<String> _terms = ['winter', 'summer'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFormData();
+  }
+
+  Future<void> _loadFormData() async {
+    try {
+      final teachers = await LessonFormService.fetchTeachers();
+      final types = await LessonFormService.fetchLessonTypes();
+      final groups = await LessonFormService.fetchGroups();
+
+      setState(() {
+        _teachers = teachers;
+        _lessonTypes = types;
+        _groups = groups;
+
+        _selectedTeacherId = teachers.isNotEmpty ? teachers.first['id'] : null;
+        _selectedLessonTypeId = types.isNotEmpty ? types.first['id'] : null;
+        _selectedGroupId = groups.isNotEmpty ? groups.first['id'] : null;
+        _selectedFrequency = _frequencies.first;
+        _selectedTerm = _terms.first;
+      });
+    } catch (e) {
+      _showError('Błąd ładowania danych formularza');
+    }
+  }
 
   Future<void> _selectStartDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
@@ -55,7 +71,13 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
       );
       if (pickedTime != null) {
         setState(() {
-          _startDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, pickedTime.hour, pickedTime.minute);
+          _startDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
         });
       }
     }
@@ -75,7 +97,13 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
       );
       if (pickedTime != null) {
         setState(() {
-          _endDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, pickedTime.hour, pickedTime.minute);
+          _endDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
         });
       }
     }
@@ -85,8 +113,21 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
     final room = _roomController.text.trim();
     final title = _titleController.text.trim();
 
-    if (room.isEmpty || title.isEmpty || _selectedTeacherId == null || _selectedLessonTypeId == null || _selectedGroupId == null || _startDate == null || _endDate == null || _selectedFrequency == null || _selectedTerm == null) {
+    if (room.isEmpty ||
+        title.isEmpty ||
+        _selectedTeacherId == null ||
+        _selectedLessonTypeId == null ||
+        _selectedGroupId == null ||
+        _startDate == null ||
+        _endDate == null ||
+        _selectedFrequency == null ||
+        _selectedTerm == null) {
       _showError('Wypełnij wszystkie pola!');
+      return;
+    }
+
+    if (_endDate!.isBefore(_startDate!)) {
+      _showError('Data końcowa nie może być przed początkową!');
       return;
     }
 
@@ -153,109 +194,141 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
     );
   }
 
+  Widget buildDropdown<T>({
+    required String label,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+          child: DropdownButtonFormField<T>(
+            value: value,
+            isExpanded: true,
+            items: items,
+            onChanged: onChanged,
+            decoration: InputDecoration(labelText: label),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isFormReady = _teachers.isNotEmpty &&
+        _lessonTypes.isNotEmpty &&
+        _groups.isNotEmpty &&
+        _selectedFrequency != null &&
+        _selectedTerm != null;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dodaj Zajęcia'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            TextField(
-              controller: _roomController,
-              decoration: const InputDecoration(labelText: 'Sala'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Tytuł zajęć'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              value: _selectedTeacherId,
-              items: _teachers.map<DropdownMenuItem<int>>((teacher) {
-                return DropdownMenuItem<int>(
-                  value: teacher['id'],
-                  child: Text(teacher['name']),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedTeacherId = value),
-              decoration: const InputDecoration(labelText: 'Prowadzący'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              value: _selectedLessonTypeId,
-              items: _lessonTypes.map<DropdownMenuItem<int>>((type) {
-                return DropdownMenuItem<int>(
-                  value: type['id'],
-                  child: Text(type['name']),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedLessonTypeId = value),
-              decoration: const InputDecoration(labelText: 'Typ zajęć'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              value: _selectedGroupId,
-              items: _groups.map<DropdownMenuItem<int>>((group) {
-                return DropdownMenuItem<int>(
-                  value: group['id'],
-                  child: Text(group['name']),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedGroupId = value),
-              decoration: const InputDecoration(labelText: 'Grupa'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedFrequency,
-              items: _frequencies.map((freq) {
-                return DropdownMenuItem<String>(
-                  value: freq,
-                  child: Text(freq),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedFrequency = value),
-              decoration: const InputDecoration(labelText: 'Częstotliwość'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedTerm,
-              items: _terms.map((term) {
-                return DropdownMenuItem<String>(
-                  value: term,
-                  child: Text(term),
-                );
-              }).toList(),
-              onChanged: (value) => setState(() => _selectedTerm = value),
-              decoration: const InputDecoration(labelText: 'Semestr'),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(_startDate == null ? 'Wybierz początek zajęć' : 'Start: ${_startDate.toString()}'),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectStartDate(context),
-            ),
-            ListTile(
-              title: Text(_endDate == null ? 'Wybierz koniec zajęć' : 'Koniec: ${_endDate.toString()}'),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectEndDate(context),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _saveLesson,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Dodaj Zajęcia'),
+      appBar: AppBar(title: const Text('Dodaj Zajęcia')),
+      body: !isFormReady
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _roomController,
+                    decoration: const InputDecoration(labelText: 'Sala'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(labelText: 'Tytuł zajęć'),
+                  ),
+                  const SizedBox(height: 16),
+                  buildDropdown<int>(
+                    label: 'Prowadzący',
+                    value: _selectedTeacherId,
+                    items: _teachers.map((teacher) {
+                      return DropdownMenuItem<int>(
+                        value: teacher['id'],
+                        child: Text(
+                          teacher['name'],
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedTeacherId = val),
+                  ),
+                  const SizedBox(height: 16),
+                  buildDropdown<int>(
+                    label: 'Typ zajęć',
+                    value: _selectedLessonTypeId,
+                    items: _lessonTypes.map((type) {
+                      return DropdownMenuItem<int>(
+                        value: type['id'],
+                        child: Text(type['name']),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedLessonTypeId = val),
+                  ),
+                  const SizedBox(height: 16),
+                  buildDropdown<int>(
+                    label: 'Grupa',
+                    value: _selectedGroupId,
+                    items: _groups.map((group) {
+                      return DropdownMenuItem<int>(
+                        value: group['id'],
+                        child: Text(group['group_name']),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedGroupId = val),
+                  ),
+                  const SizedBox(height: 16),
+                  buildDropdown<String>(
+                    label: 'Częstotliwość',
+                    value: _selectedFrequency,
+                    items: _frequencies.map((f) {
+                      return DropdownMenuItem<String>(
+                        value: f,
+                        child: Text(f),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedFrequency = val),
+                  ),
+                  const SizedBox(height: 16),
+                  buildDropdown<String>(
+                    label: 'Semestr',
+                    value: _selectedTerm,
+                    items: _terms.map((t) {
+                      return DropdownMenuItem<String>(
+                        value: t,
+                        child: Text(t),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedTerm = val),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    title: Text(_startDate == null ? 'Wybierz początek zajęć' : 'Start: $_startDate'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () => _selectStartDate(context),
+                  ),
+                  ListTile(
+                    title: Text(_endDate == null ? 'Wybierz koniec zajęć' : 'Koniec: $_endDate'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () => _selectEndDate(context),
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _saveLesson,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Dodaj Zajęcia'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

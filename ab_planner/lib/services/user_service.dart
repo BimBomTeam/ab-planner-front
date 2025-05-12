@@ -86,6 +86,7 @@ class UserService {
   /// Wylogowanie użytkownika
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
+    
     await prefs.remove('auth_token');
   }
 

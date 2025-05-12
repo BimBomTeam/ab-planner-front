@@ -32,7 +32,6 @@ class LessonService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-
       if (data != null && data['Group'] != null && data['Group']['id'] != null) {
         _cachedGroupId = data['Group']['id'];
         return _cachedGroupId!;
@@ -63,7 +62,9 @@ class LessonService {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((lessonData) => Lesson.fromJson(lessonData)).toList();
     } else {
-      throw Exception('Nie udało się pobrać lekcji na dany dzień.');
+      final data = jsonDecode(response.body);
+      final message = data['message'] ?? data['error'] ?? 'Nie udało się pobrać lekcji na dany dzień.';
+      throw Exception(message);
     }
   }
 
@@ -82,7 +83,9 @@ class LessonService {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((lessonData) => Lesson.fromJson(lessonData)).toList();
     } else {
-      throw Exception('Nie udało się pobrać lekcji.');
+      final data = jsonDecode(response.body);
+      final message = data['message'] ?? data['error'] ?? 'Nie udało się pobrać lekcji.';
+      throw Exception(message);
     }
   }
 
@@ -121,7 +124,8 @@ class LessonService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final data = jsonDecode(response.body);
-      throw Exception(data['error'] ?? 'Nie udało się dodać lekcji.');
+      final message = data['message'] ?? data['error'] ?? 'Nie udało się dodać lekcji.';
+      throw Exception(message);
     }
   }
 
@@ -161,7 +165,8 @@ class LessonService {
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       final data = jsonDecode(response.body);
-      throw Exception(data['error'] ?? 'Nie udało się zaktualizować lekcji.');
+      final message = data['message'] ?? data['error'] ?? 'Nie udało się zaktualizować lekcji.';
+      throw Exception(message);
     }
   }
 }
