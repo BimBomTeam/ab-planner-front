@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String _baseUrl = 'http://10.0.2.2:3000/api/users';
+  static const String _baseUrl = 'http://193.122.12.41:3000/api/users';
 
   static Future<String?> login(String email, String password) async {
     final url = Uri.parse('$_baseUrl/login');
@@ -21,6 +21,7 @@ class AuthService {
       return token;
     } else {
       final data = json.decode(response.body);
+      print(data);
       throw Exception(data['error'] ?? 'Nieprawidłowe dane logowania');
     }
   }
@@ -46,6 +47,7 @@ class AuthService {
       return token;
     } else {
       final data = json.decode(response.body);
+      print(data);
       throw Exception(data['error'] ?? 'Błąd rejestracji');
     }
   }

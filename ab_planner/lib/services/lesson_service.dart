@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/lesson.dart';
 
 class LessonService {
-  static const String _baseUrl = 'http://10.0.2.2:3000/api/lessons';
-  static const String _userUrl = 'http://10.0.2.2:3000/api/users/me';
+  static const String _baseUrl = 'http://193.122.12.41:3000/api/lessons';
+  static const String _userUrl = 'http://193.122.12.41:3000/api/users/me';
 
   static int? _cachedGroupId;
 

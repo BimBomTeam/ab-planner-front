@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
 
 class UserService {
-  static const String _baseUrl = 'http://10.0.2.2:3000/api';
+  static const String _baseUrl = 'http://193.122.12.41:3000:3000/api';
 
 
   static Future<List<GroupModel>> fetchGroups(String startYear) async {
@@ -159,7 +159,7 @@ static Future<List<GroupModel>> fetchAllGroups() async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('auth_token');
 
-  final url = Uri.parse('http://10.0.2.2:3000/api/groups');
+  final url = Uri.parse('http://193.122.12.41:3000:3000/api/groups');
   final response = await http.get(
     url,
     headers: {
