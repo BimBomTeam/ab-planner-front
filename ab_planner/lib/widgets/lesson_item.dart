@@ -4,7 +4,7 @@ import 'package:ab_planner/models/lesson.dart';
 import 'package:ab_planner/screens/lesson_details_screen.dart';
 
 class LessonItem extends StatelessWidget {
-  final Lesson lesson;
+  final dynamic lesson; // Akceptuje zarówno Lesson jak i LessonV1
 
   const LessonItem({super.key, required this.lesson});
 
@@ -13,9 +13,29 @@ class LessonItem extends StatelessWidget {
     final timeFormat = DateFormat.Hm();
     final dateFormat = DateFormat('EEE, d MMM', 'pl_PL');
 
-    final startTime = timeFormat.format(lesson.start.toLocal());
-    final endTime = timeFormat.format(lesson.end.toLocal());
-    final dayText = dateFormat.format(lesson.start.toLocal());
+    // Obsługa zarówno starych jak i nowych lekcji
+    final DateTime startTime;
+    final DateTime endTime;
+    final String title;
+    final String roomText;
+
+    if (lesson is LessonV1) {
+      final lessonV1 = lesson as LessonV1;
+      startTime = lessonV1.startsAt.toLocal();
+      endTime = lessonV1.endsAt.toLocal();
+      title = lessonV1.subject.name;
+      roomText = '${lessonV1.room.building} ${lessonV1.room.number}';
+    } else {
+      final oldLesson = lesson as Lesson;
+      startTime = oldLesson.start.toLocal();
+      endTime = oldLesson.end.toLocal();
+      title = oldLesson.title;
+      roomText = oldLesson.room;
+    }
+
+    final startTimeStr = timeFormat.format(startTime);
+    final endTimeStr = timeFormat.format(endTime);
+    final dayText = dateFormat.format(startTime);
 
     return InkWell(
       onTap: () {
@@ -45,12 +65,12 @@ class LessonItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      lesson.title,
+                      title,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                     ),
                     const SizedBox(height: 4),
                     Text(dayText, style: const TextStyle(color: Colors.white70)),
-                    Text('$startTime – $endTime | Sala ${lesson.room}', style: const TextStyle(color: Colors.white60)),
+                    Text('$startTimeStr – $endTimeStr | Sala $roomText', style: const TextStyle(color: Colors.white60)),
                   ],
                 ),
               ),

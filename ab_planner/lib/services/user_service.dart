@@ -2,11 +2,30 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
+import 'package:ab_planner/models/program_model.dart';
+import 'package:ab_planner/models/student_selection_model.dart';
+import 'package:ab_planner/models/notification_model.dart';
 
 class UserService {
-  static const String _baseUrl = 'http://193.122.12.41:3000/api';
+  static const String _baseUrl = 'http://193.122.12.41:8000/api/v1';
 
-  /// Pobierz wszystkie grupy
+  /// Pobierz wszystkie programy (kierunki) z rocznikiami i specjalizacjami
+  static Future<List<ProgramModel>> fetchAllPrograms() async {
+    final url = Uri.parse('$_baseUrl/programs');
+    final response = await http.get(url);
+
+    print('fetchAllPrograms status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map((programJson) => ProgramModel.fromJson(programJson)).toList();
+    } else {
+      throw Exception('Błąd ładowania programów');
+    }
+  }
+
+  /// DEPRECATED - stary endpoint, zachowane dla kompatybilności
+  /// Użyj fetchAllPrograms() zamiast tego
   static Future<List<GroupModel>> fetchAllGroups() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -29,8 +48,8 @@ class UserService {
     }
   }
 
-  /// Pobierz grupy dla konkretnego rocznika
-  static Future<List<GroupModel>> fetchGroups(String startYear) async {
+  /// DEPRECATED - stary endpoint, użyj fetchGroups() z nowymi parametrami
+  static Future<List<GroupModel>> fetchGroupsByStartYear(String startYear) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
 
@@ -43,7 +62,7 @@ class UserService {
       },
     );
 
-    print('fetchGroups status: ${response.statusCode}');
+    print('fetchGroupsByStartYear status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
@@ -53,8 +72,8 @@ class UserService {
     }
   }
 
-  /// Pobierz dane konkretnej grupy po ID
-  static Future<GroupModel> fetchGroupById(int groupId) async {
+  /// DEPRECATED - stary endpoint, użyj fetchGroupById() z nowym API
+  static Future<GroupModel> fetchOldGroupById(int groupId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
 
@@ -66,7 +85,7 @@ class UserService {
       },
     );
 
-    print('fetchGroupById status: ${response.statusCode}');
+    print('fetchOldGroupById status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -139,57 +158,199 @@ class UserService {
     }
   }
 
-  /// Pobierz dostępne kierunki
+  /// Pobierz dostępne kierunki (programy)
   static Future<List<Map<String, dynamic>>> fetchMajorsWithIds() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    final programs = await fetchAllPrograms();
+    return programs.map((program) => {
+      'id': program.id,
+      'name': program.name,
+    }).toList();
+  }
 
-    final url = Uri.parse('$_baseUrl/majors');
-    final response = await http.get(
-      url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
+  /// Pobierz unikalne roczniki z wszystkich programów
+  static Future<List<int>> fetchStartYears() async {
+    final programs = await fetchAllPrograms();
+    final years = <int>{};
+    
+    for (final program in programs) {
+      for (final year in program.years) {
+        years.add(year.year);
+      }
+    }
+    
+    final yearsList = years.toList();
+    yearsList.sort((a, b) => b.compareTo(a)); // Od najnowszego do najstarszego
+    return yearsList;
+  }
 
-    print('fetchMajors status: ${response.statusCode}');
+  /// Pobierz grupy dla danego programu z opcjonalnymi filtrami
+  static Future<List<Group>> fetchProgramGroups({
+    required int programId,
+    int? programYearId,
+    int? specializationId,
+    String? groupType,
+  }) async {
+    final queryParams = <String, String>{};
+    if (programYearId != null) {
+      queryParams['program_year_id'] = programYearId.toString();
+    }
+    if (specializationId != null) {
+      queryParams['specialization_id'] = specializationId.toString();
+    }
+    if (groupType != null) {
+      queryParams['group_type'] = groupType;
+    }
+
+    final url = Uri.parse('$_baseUrl/programs/$programId/groups')
+        .replace(queryParameters: queryParams);
+    
+    final response = await http.get(url);
+
+    print('fetchProgramGroups status: ${response.statusCode}');
+    print('fetchProgramGroups url: $url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
-      return data.map((major) => {
-        'id': major['id'],
-        'name': major['name'],
-      }).toList();
+      return data.map((groupJson) => Group.fromJson(groupJson)).toList();
     } else {
-      throw Exception('Błąd ładowania kierunków');
+      throw Exception('Błąd ładowania grup programu');
     }
   }
 
-  /// Pobierz unikalne roczniki startowe
-  static Future<List<String>> fetchStartYears() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+  /// Pobierz wszystkie grupy z opcjonalnymi filtrami
+  static Future<List<Group>> fetchGroups({
+    int? programId,
+    int? programYearId,
+    int? specializationId,
+    String? groupType,
+  }) async {
+    final queryParams = <String, String>{};
+    if (programId != null) {
+      queryParams['program_id'] = programId.toString();
+    }
+    if (programYearId != null) {
+      queryParams['program_year_id'] = programYearId.toString();
+    }
+    if (specializationId != null) {
+      queryParams['specialization_id'] = specializationId.toString();
+    }
+    if (groupType != null) {
+      queryParams['group_type'] = groupType;
+    }
 
-    final url = Uri.parse('$_baseUrl/groups');
-    final response = await http.get(
-      url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
+    final url = Uri.parse('$_baseUrl/groups')
+        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    
+    final response = await http.get(url);
 
-    print('fetchStartYears status: ${response.statusCode}');
+    print('fetchGroups status: ${response.statusCode}');
+    print('fetchGroups url: $url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
-      final years = data
-          .map((group) => group['start_year'] as String)
-          .toSet()
-          .toList();
-      years.sort((a, b) => b.compareTo(a));
-      return years;
+      return data.map((groupJson) => Group.fromJson(groupJson)).toList();
     } else {
-      throw Exception('Błąd ładowania roczników');
+      throw Exception('Błąd ładowania grup');
+    }
+  }
+
+  /// Pobierz szczegóły pojedynczej grupy po ID
+  static Future<Group> fetchGroupById(int groupId) async {
+    final url = Uri.parse('$_baseUrl/groups/$groupId');
+    final response = await http.get(url);
+
+    print('fetchGroupById status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return Group.fromJson(data);
+    } else {
+      throw Exception('Błąd ładowania grupy');
+    }
+  }
+
+  /// Pobierz wybory grup studenta
+  static Future<List<StudentGroupSelection>> fetchStudentGroupSelections({
+    int? userId,
+  }) async {
+    final queryParams = <String, String>{};
+    if (userId != null) {
+      queryParams['user_id'] = userId.toString();
+    }
+
+    final url = Uri.parse('$_baseUrl/student-group-selection')
+        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+    final response = await http.get(url);
+
+    print('fetchStudentGroupSelections status: ${response.statusCode}');
+    print('fetchStudentGroupSelections url: $url');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map((selectionJson) => StudentGroupSelection.fromJson(selectionJson)).toList();
+    } else {
+      throw Exception('Błąd ładowania wyborów grup');
+    }
+  }
+
+  /// Utwórz wybór grupy dla studenta
+  static Future<StudentGroupSelection> createStudentGroupSelection({
+    required int groupId,
+    int? userId, // Opcjonalne - backend może użyć zalogowanego użytkownika
+  }) async {
+    final url = Uri.parse('$_baseUrl/student-group-selection');
+
+    final body = CreateStudentGroupSelectionRequest(
+      groupId: groupId,
+      userId: userId,
+    );
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(body.toJson()),
+    );
+
+    print('createStudentGroupSelection status: ${response.statusCode}');
+    print('createStudentGroupSelection body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = json.decode(response.body);
+      return StudentGroupSelection.fromJson(data);
+    } else {
+      throw Exception('Błąd tworzenia wyboru grupy');
+    }
+  }
+
+  /// Pobierz powiadomienia
+  static Future<List<Notification>> fetchNotifications({
+    int? userId,
+    String? status,
+  }) async {
+    final queryParams = <String, String>{};
+    if (userId != null) {
+      queryParams['user_id'] = userId.toString();
+    }
+    if (status != null) {
+      queryParams['status'] = status;
+    }
+
+    final url = Uri.parse('$_baseUrl/notifications')
+        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+    final response = await http.get(url);
+
+    print('fetchNotifications status: ${response.statusCode}');
+    print('fetchNotifications url: $url');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map((notificationJson) => Notification.fromJson(notificationJson)).toList();
+    } else {
+      throw Exception('Błąd ładowania powiadomień');
     }
   }
 }
