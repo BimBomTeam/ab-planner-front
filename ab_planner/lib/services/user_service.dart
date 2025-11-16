@@ -4,9 +4,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
 
 class UserService {
-  static const String _baseUrl = 'http://193.122.12.41:3000:3000/api';
+  static const String _baseUrl = 'http://193.122.12.41:3000/api';
 
+  /// Pobierz wszystkie grupy
+  static Future<List<GroupModel>> fetchAllGroups() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
+    final url = Uri.parse('$_baseUrl/groups');
+    final response = await http.get(
+      url,
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('fetchAllGroups status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map((groupJson) => GroupModel.fromJson(groupJson)).toList();
+    } else {
+      throw Exception('Błąd ładowania grup');
+    }
+  }
+
+  /// Pobierz grupy dla konkretnego rocznika
   static Future<List<GroupModel>> fetchGroups(String startYear) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -20,6 +43,8 @@ class UserService {
       },
     );
 
+    print('fetchGroups status: ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
       return data.map((groupJson) => GroupModel.fromJson(groupJson)).toList();
@@ -28,7 +53,7 @@ class UserService {
     }
   }
 
-  
+  /// Pobierz dane konkretnej grupy po ID
   static Future<GroupModel> fetchGroupById(int groupId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -41,6 +66,8 @@ class UserService {
       },
     );
 
+    print('fetchGroupById status: ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return GroupModel.fromJson(data);
@@ -49,7 +76,7 @@ class UserService {
     }
   }
 
-  /// Aktualizacja profilu użytkownika
+  /// Zapisz dane użytkownika
   static Future<void> saveProfile({
     required int userId,
     required String firstName,
@@ -75,105 +102,94 @@ class UserService {
       body: json.encode(body),
     );
 
-    print('saveProfile response: ${response.statusCode}');
-    print('saveProfile body: ${response.body}');
+    print('saveProfile status: ${response.statusCode}');
+    print('saveProfile response: ${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Błąd zapisu danych');
     }
   }
 
-  /// Wylogowanie użytkownika
+  /// Wyloguj użytkownika
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
   }
 
-  /// Pobiera listę kierunków studiów
+  /// Pobierz dane aktualnie zalogowanego użytkownika
+  static Future<Map<String, dynamic>> fetchCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    final url = Uri.parse('$_baseUrl/users/me');
+    final response = await http.get(
+      url,
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('fetchCurrentUser status: ${response.statusCode}');
+    print('fetchCurrentUser body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Błąd pobierania danych użytkownika');
+    }
+  }
+
+  /// Pobierz dostępne kierunki
   static Future<List<Map<String, dynamic>>> fetchMajorsWithIds() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-  final url = Uri.parse('$_baseUrl/majors');
-  final response = await http.get(
-    url,
-    headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    },
-  );
+    final url = Uri.parse('$_baseUrl/majors');
+    final response = await http.get(
+      url,
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
 
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body) as List;
-    return data.map((major) => {
-      'id': major['id'],
-      'name': major['name'],
-    }).toList();
-  } else {
-    throw Exception('Błąd ładowania kierunków');
+    print('fetchMajors status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map((major) => {
+        'id': major['id'],
+        'name': major['name'],
+      }).toList();
+    } else {
+      throw Exception('Błąd ładowania kierunków');
+    }
   }
-}
-static Future<Map<String, dynamic>> fetchCurrentUser() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
 
-  final url = Uri.parse('$_baseUrl/users/me');
-  final response = await http.get(
-    url,
-    headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    },
-  );
+  /// Pobierz unikalne roczniki startowe
+  static Future<List<String>> fetchStartYears() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-  if (response.statusCode == 200) {
-    return json.decode(response.body) as Map<String, dynamic>;
-  } else {
-    throw Exception('Błąd pobierania danych użytkownika');
+    final url = Uri.parse('$_baseUrl/groups');
+    final response = await http.get(
+      url,
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('fetchStartYears status: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      final years = data
+          .map((group) => group['start_year'] as String)
+          .toSet()
+          .toList();
+      years.sort((a, b) => b.compareTo(a));
+      return years;
+    } else {
+      throw Exception('Błąd ładowania roczników');
+    }
   }
-}
-static Future<List<String>> fetchStartYears() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
-
-  final url = Uri.parse('$_baseUrl/groups');
-  final response = await http.get(
-    url,
-    headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    },
-  );
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body) as List;
-    // Wyciągnięcie unikalnych start_year
-    final years = data
-        .map((group) => group['start_year'] as String)
-        .toSet() // usuń duplikaty
-        .toList();
-    years.sort((a, b) => b.compareTo(a)); // posortuj malejąco np. 2024/25, 2023/24
-    return years;
-  } else {
-    throw Exception('Błąd ładowania roczników');
-  }
-}
-static Future<List<GroupModel>> fetchAllGroups() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
-
-  final url = Uri.parse('http://193.122.12.41:3000:3000/api/groups');
-  final response = await http.get(
-    url,
-    headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    },
-  );
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body) as List;
-    return data.map((groupJson) => GroupModel.fromJson(groupJson)).toList();
-  } else {
-    throw Exception('Błąd ładowania grup');
-  }
-}
-
-
 }

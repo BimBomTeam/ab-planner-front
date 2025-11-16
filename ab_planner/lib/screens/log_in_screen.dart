@@ -18,10 +18,12 @@ class _LogInScreenState extends State<LogInScreen> {
   bool _isResetLoading = false;
 
   Future<void> _logIn(BuildContext context) async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim()+"@stud.akademiabialska.pl";
     final password = _passwordController.text.trim();
 
+
     if (email.isEmpty || password.isEmpty) {
+      print(email);
       _showError('Proszę wypełnić wszystkie pola');
       return;
     }
@@ -192,7 +194,7 @@ class _LogInScreenState extends State<LogInScreen> {
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.email),
                         labelText: 'Email',
-                        //suffixText: '@stud.akademiabialska.pl',
+                        suffixText: '@stud.akademiabialska.pl',
                         suffixStyle: const TextStyle(color: Colors.white70),
                       ),
                     ),

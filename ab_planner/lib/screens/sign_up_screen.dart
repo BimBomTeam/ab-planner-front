@@ -20,7 +20,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
  Future<void> _register(BuildContext context) async {
   final firstName = _firstNameController.text.trim();
   final lastName = _lastNameController.text.trim();
-  final email = _emailController.text.trim();
+  final email = _emailController.text.trim()+"@stud.akademiabialska.pl";
   final password = _passwordController.text.trim();
   final confirmPassword = _confirmController.text.trim();
 
@@ -151,7 +151,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      //suffixText: '@stud.akademiabialska.pl',
+                      suffixText: '@stud.akademiabialska.pl',
                       filled: true,
                       fillColor: Colors.white10,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),

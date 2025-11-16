@@ -29,8 +29,9 @@ class LessonService {
         'Authorization': 'Bearer $token',
       },
     );
-
+  
     if (response.statusCode == 200) {
+      print(response.body);
       final data = jsonDecode(response.body);
       if (data != null && data['Group'] != null && data['Group']['id'] != null) {
         _cachedGroupId = data['Group']['id'];

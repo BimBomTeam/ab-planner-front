@@ -12,7 +12,7 @@ class AuthService {
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'email': email, 'password': password}),
     );
-
+    print(response.statusCode);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final token = data['token'];
@@ -48,7 +48,7 @@ class AuthService {
     } else {
       final data = json.decode(response.body);
       print(data);
-      throw Exception(data['error'] ?? 'Błąd rejestracji');
+      throw Exception(data['error'] ?? 'Potwierdź maila');
     }
   }
   static Future<void> resetPassword(String email) async {
