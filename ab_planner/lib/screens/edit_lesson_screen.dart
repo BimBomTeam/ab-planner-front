@@ -28,7 +28,7 @@ class _EditLessonScreenState extends State<EditLessonScreen> {
   List<Map<String, dynamic>> _lessonTypes = [];
   List<Map<String, dynamic>> _groups = [];
 
-  final List<String> _frequencies = [ 'weekly', 'biweekly'];
+  final List<String> _frequencies = ['weekly', 'biweekly'];
   final List<String> _terms = ['winter', 'summer'];
 
   @override
@@ -101,16 +101,17 @@ class _EditLessonScreenState extends State<EditLessonScreen> {
   void _showError(String msg) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Błąd'),
-        content: Text(msg),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Błąd'),
+            content: Text(msg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -123,11 +124,15 @@ class _EditLessonScreenState extends State<EditLessonScreen> {
     );
     if (pickedDate == null) return;
 
+    if (!mounted) return;
+
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(isStart ? _startDate : _endDate),
     );
     if (pickedTime == null) return;
+
+    if (!mounted) return;
 
     setState(() {
       final dt = DateTime(
@@ -149,118 +154,144 @@ class _EditLessonScreenState extends State<EditLessonScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Edytuj Zajęcia')),
-      body: _teachers.isEmpty || _lessonTypes.isEmpty || _groups.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  TextField(controller: _roomController, decoration: const InputDecoration(labelText: 'Sala')),
-                  const SizedBox(height: 16),
-                  TextField(controller: _titleController, decoration: const InputDecoration(labelText: 'Tytuł')),
-                  const SizedBox(height: 16),
-
-                  // Prowadzący
-                  DropdownButtonFormField<int>(
-                    value: _selectedTeacherId,
-                    isExpanded: true,
-                    items: _teachers.map<DropdownMenuItem<int>>((t) {
-                      return DropdownMenuItem<int>(
-                        value: t['id'],
-                        child: Text(t['name'], overflow: TextOverflow.ellipsis),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedTeacherId = val!),
-                    decoration: const InputDecoration(labelText: 'Prowadzący'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Typ zajęć
-                  DropdownButtonFormField<int>(
-                    value: _selectedLessonTypeId,
-                    isExpanded: true,
-                    items: _lessonTypes.map<DropdownMenuItem<int>>((t) {
-                      return DropdownMenuItem<int>(
-                        value: t['id'],
-                        child: Text(t['name']),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedLessonTypeId = val!),
-                    decoration: const InputDecoration(labelText: 'Typ zajęć'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Grupa
-                  DropdownButtonFormField<int>(
-                    value: _selectedGroupId,
-                    isExpanded: true,
-                    items: _groups.map<DropdownMenuItem<int>>((g) {
-                      return DropdownMenuItem<int>(
-                        value: g['id'],
-                        child: Text(g['group_name']),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedGroupId = val!),
-                    decoration: const InputDecoration(labelText: 'Grupa'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Częstotliwość
-                  DropdownButtonFormField<String>(
-                    value: _selectedFrequency,
-                    isExpanded: true,
-                    items: _frequencies.map<DropdownMenuItem<String>>((f) {
-                      return DropdownMenuItem<String>(
-                        value: f,
-                        child: Text(f),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedFrequency = val!),
-                    decoration: const InputDecoration(labelText: 'Częstotliwość'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Semestr
-                  DropdownButtonFormField<String>(
-                    value: _selectedTerm,
-                    isExpanded: true,
-                    items: _terms.map<DropdownMenuItem<String>>((t) {
-                      return DropdownMenuItem<String>(
-                        value: t,
-                        child: Text(t),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedTerm = val!),
-                    decoration: const InputDecoration(labelText: 'Semestr'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Daty
-                  ListTile(
-                    title: Text('Początek: $_startDate'),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () => _pickDateTime(true),
-                  ),
-                  ListTile(
-                    title: Text('Koniec: $_endDate'),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () => _pickDateTime(false),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Przycisk zapisu
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _updateLesson,
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Zapisz zmiany'),
+      body:
+          _teachers.isEmpty || _lessonTypes.isEmpty || _groups.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _roomController,
+                      decoration: const InputDecoration(labelText: 'Sala'),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(labelText: 'Tytuł'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Prowadzący
+                    DropdownButtonFormField<int>(
+                      value: _selectedTeacherId,
+                      isExpanded: true,
+                      items:
+                          _teachers.map<DropdownMenuItem<int>>((t) {
+                            return DropdownMenuItem<int>(
+                              value: t['id'],
+                              child: Text(
+                                t['name'],
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (val) => setState(() => _selectedTeacherId = val!),
+                      decoration: const InputDecoration(
+                        labelText: 'Prowadzący',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Typ zajęć
+                    DropdownButtonFormField<int>(
+                      value: _selectedLessonTypeId,
+                      isExpanded: true,
+                      items:
+                          _lessonTypes.map<DropdownMenuItem<int>>((t) {
+                            return DropdownMenuItem<int>(
+                              value: t['id'],
+                              child: Text(t['name']),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (val) => setState(() => _selectedLessonTypeId = val!),
+                      decoration: const InputDecoration(labelText: 'Typ zajęć'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Grupa
+                    DropdownButtonFormField<int>(
+                      value: _selectedGroupId,
+                      isExpanded: true,
+                      items:
+                          _groups.map<DropdownMenuItem<int>>((g) {
+                            return DropdownMenuItem<int>(
+                              value: g['id'],
+                              child: Text(g['group_name']),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (val) => setState(() => _selectedGroupId = val!),
+                      decoration: const InputDecoration(labelText: 'Grupa'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Częstotliwość
+                    DropdownButtonFormField<String>(
+                      value: _selectedFrequency,
+                      isExpanded: true,
+                      items:
+                          _frequencies.map<DropdownMenuItem<String>>((f) {
+                            return DropdownMenuItem<String>(
+                              value: f,
+                              child: Text(f),
+                            );
+                          }).toList(),
+                      onChanged:
+                          (val) => setState(() => _selectedFrequency = val!),
+                      decoration: const InputDecoration(
+                        labelText: 'Częstotliwość',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Semestr
+                    DropdownButtonFormField<String>(
+                      value: _selectedTerm,
+                      isExpanded: true,
+                      items:
+                          _terms.map<DropdownMenuItem<String>>((t) {
+                            return DropdownMenuItem<String>(
+                              value: t,
+                              child: Text(t),
+                            );
+                          }).toList(),
+                      onChanged: (val) => setState(() => _selectedTerm = val!),
+                      decoration: const InputDecoration(labelText: 'Semestr'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Daty
+                    ListTile(
+                      title: Text('Początek: $_startDate'),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _pickDateTime(true),
+                    ),
+                    ListTile(
+                      title: Text('Koniec: $_endDate'),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _pickDateTime(false),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Przycisk zapisu
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _updateLesson,
+                        child:
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text('Zapisz zmiany'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
     );
   }
 }

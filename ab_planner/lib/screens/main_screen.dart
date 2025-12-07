@@ -4,6 +4,7 @@ import 'package:ab_planner/screens/profile_screen.dart';
 import 'package:ab_planner/screens/add_lesson_screen.dart';
 import 'package:ab_planner/screens/edit_lesson_screen.dart';
 import 'package:ab_planner/services/lesson_service.dart';
+import 'package:ab_planner/services/user_service.dart';
 import 'package:ab_planner/widgets/lesson_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -30,8 +31,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     initializeDateFormatting('pl_PL', null);
-    _checkLoginStatus();
-    _loadLessons();
+    _checkLoginStatus().then((_) => _loadLessons());
   }
 
   Future<void> _checkLoginStatus() async {
@@ -67,30 +67,68 @@ class _MainScreenState extends State<MainScreen> {
 
     try {
       // group_id=1 na sztywno, dzisiejsza data
-      final startOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-      final endOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 23, 59, 59);
-      
-      print('📅 Pobieranie lekcji dla grupy 1, data: ${_selectedDate.toLocal()}');
-      print('📅 Od: $startOfDay');
-      print('📅 Do: $endOfDay');
-      
+      final startOfDay = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+      );
+      final endOfDay = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        23,
+        59,
+        59,
+      );
+
+      debugPrint('📅 Pobieranie lekcji dla daty: ${_selectedDate.toLocal()}');
+      debugPrint('📅 Od: $startOfDay');
+      debugPrint('📅 Do: $endOfDay');
+
+      int? groupId;
+      if (_isLoggedIn) {
+        try {
+          final user = await UserService.fetchCurrentUser();
+          final selections = await UserService.fetchStudentGroupSelections(
+            userId: user.id,
+          );
+          if (selections.isNotEmpty) {
+            groupId = selections.first.groupId;
+            debugPrint('👥 Pobrano ID grupy użytkownika: $groupId');
+          } else {
+            debugPrint('⚠️ Użytkownik nie ma przypisanej żadnej grupy.');
+          }
+        } catch (e) {
+          debugPrint('❌ Błąd pobierania grupy użytkownika: $e');
+        }
+      }
+
+      if (groupId == null) {
+        debugPrint(
+          '⚠️ Brak wybranej grupy, pobieram bez filtra grupy (lub pusta lista)',
+        );
+        // Możemy tu zdecydować czy pobierać wszystko czy nic.
+        // Jeśli API wymaga group_id dla studenta, to może zwrócić błąd lub pusto.
+        // Na razie spróbujmy pobrać bez group_id - API pozwala na null.
+      }
+
       final lessons = await LessonService.fetchLessons(
-        groupId: 1,
+        groupId: groupId,
         dateFrom: startOfDay,
         dateTo: endOfDay,
       );
-      
+
       setState(() {
         _lessons = lessons;
       });
-      
-      print('✅ Załadowano ${lessons.length} lekcji');
+
+      debugPrint('✅ Załadowano ${lessons.length} lekcji');
     } catch (e) {
-      print('❌ Błąd podczas pobierania lekcji: $e');
+      debugPrint('❌ Błąd podczas pobierania lekcji: $e');
       setState(() {
         _lessons = [];
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -146,13 +184,13 @@ class _MainScreenState extends State<MainScreen> {
 
   String _getTotalDuration() {
     if (_lessons.isEmpty) return '0h 0min';
-    
+
     int totalMinutes = 0;
     for (var lesson in _lessons) {
       final duration = lesson.endsAt.difference(lesson.startsAt);
       totalMinutes += duration.inMinutes;
     }
-    
+
     final hours = totalMinutes ~/ 60;
     final minutes = totalMinutes % 60;
     return '${hours}h ${minutes}min';
@@ -160,37 +198,50 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('EEEE, d MMMM yyyy', 'pl_PL').format(_selectedDate);
-    final isToday = _selectedDate.year == DateTime.now().year &&
-                    _selectedDate.month == DateTime.now().month &&
-                    _selectedDate.day == DateTime.now().day;
+    final formattedDate = DateFormat(
+      'EEEE, d MMMM yyyy',
+      'pl_PL',
+    ).format(_selectedDate);
+    final isToday =
+        _selectedDate.year == DateTime.now().year &&
+        _selectedDate.month == DateTime.now().month &&
+        _selectedDate.day == DateTime.now().day;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1F38),
         elevation: 0,
-        leading: _isLoggedIn
-            ? IconButton(
-                icon: const Icon(Icons.person, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                  );
-                },
-              )
-            : IconButton(
-                icon: const Icon(Icons.login, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LogInScreen()),
-                  );
-                },
-              ),
+        leading:
+            _isLoggedIn
+                ? IconButton(
+                  icon: const Icon(Icons.person, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                )
+                : IconButton(
+                  icon: const Icon(Icons.login, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LogInScreen(),
+                      ),
+                    );
+                  },
+                ),
         title: const Text(
           'Plan zajęć',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         actions: [
           if (!isToday)
@@ -222,12 +273,19 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 // Nawigacja dat
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
+                        icon: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                         onPressed: _goToPreviousDay,
                       ),
                       Expanded(
@@ -245,7 +303,10 @@ class _MainScreenState extends State<MainScreen> {
                             if (isToday)
                               Container(
                                 margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.deepPurpleAccent,
                                   borderRadius: BorderRadius.circular(12),
@@ -263,7 +324,11 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.chevron_right, color: Colors.white, size: 32),
+                        icon: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                         onPressed: _goToNextDay,
                       ),
                     ],
@@ -289,12 +354,14 @@ class _MainScreenState extends State<MainScreen> {
                         _buildStatCard(
                           icon: Icons.school,
                           label: 'Wykłady',
-                          value: '${_lessons.where((l) => l.lessonType == 'lecture').length}',
+                          value:
+                              '${_lessons.where((l) => l.lessonType == 'lecture').length}',
                         ),
                         _buildStatCard(
                           icon: Icons.science,
                           label: 'Laby',
-                          value: '${_lessons.where((l) => l.lessonType == 'lab').length}',
+                          value:
+                              '${_lessons.where((l) => l.lessonType == 'lab').length}',
                         ),
                       ],
                     ),
@@ -304,71 +371,87 @@ class _MainScreenState extends State<MainScreen> {
           ),
           // Lista zajęć
           Expanded(
-            child: _isLoadingLessons
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: Colors.deepPurpleAccent),
-                        SizedBox(height: 16),
-                        Text('Ładowanie zajęć...', style: TextStyle(color: Colors.white70)),
-                      ],
-                    ),
-                  )
-                : _lessons.isEmpty
+            child:
+                _isLoadingLessons
+                    ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.deepPurpleAccent,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Ładowanie zajęć...',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    )
+                    : _lessons.isEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.event_busy,
-                              size: 80,
-                              color: Colors.white.withOpacity(0.3),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_busy,
+                            size: 80,
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Brak zajęć tego dnia',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white70,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Brak zajęć tego dnia',
-                              style: TextStyle(fontSize: 18, color: Colors.white70),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Ciesz się wolnym dniem!',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white38,
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Ciesz się wolnym dniem!',
-                              style: TextStyle(fontSize: 14, color: Colors.white38),
-                            ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: 160,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  backgroundColor: Colors.deepPurpleAccent,
-                                  foregroundColor: Colors.white,
-                                  elevation: 3,
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: 160,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
                                 ),
-                                onPressed: _loadLessons,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Odśwież'),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: Colors.deepPurpleAccent,
+                                foregroundColor: Colors.white,
+                                elevation: 3,
                               ),
+                              onPressed: _loadLessons,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Odśwież'),
                             ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ),
+                    )
                     : ListView.builder(
-                        padding: const EdgeInsets.only(top: 16),
-                        itemCount: _lessons.length,
-                        itemBuilder: (context, index) {
-                          final lesson = _lessons[index];
-                          
-                          // Tylko stare lekcje można edytować (bo EditLessonScreen używa starego API)
-                          final canEdit = lesson is Lesson && _userRole == 'admin';
-                          
-                          return Slidable(
-                            key: ValueKey(lesson.id),
-                            endActionPane: canEdit
-                                ? ActionPane(
+                      padding: const EdgeInsets.only(top: 16),
+                      itemCount: _lessons.length,
+                      itemBuilder: (context, index) {
+                        final lesson = _lessons[index];
+
+                        // Tylko stare lekcje można edytować (bo EditLessonScreen używa starego API)
+                        final canEdit =
+                            lesson is Lesson && _userRole == 'admin';
+
+                        return Slidable(
+                          key: ValueKey(lesson.id),
+                          endActionPane:
+                              canEdit
+                                  ? ActionPane(
                                     motion: const DrawerMotion(),
                                     children: [
                                       SlidableAction(
@@ -376,7 +459,10 @@ class _MainScreenState extends State<MainScreen> {
                                           await Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => EditLessonScreen(lesson: lesson as Lesson),
+                                              builder:
+                                                  (context) => EditLessonScreen(
+                                                    lesson: lesson as Lesson,
+                                                  ),
                                             ),
                                           );
                                           _loadLessons();
@@ -387,32 +473,39 @@ class _MainScreenState extends State<MainScreen> {
                                       ),
                                     ],
                                   )
-                                : null,
-                            child: LessonItem(lesson: lesson),
-                          );
-                        },
-                      ),
+                                  : null,
+                          child: LessonItem(lesson: lesson),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
-      floatingActionButton: (_isLoggedIn && _userRole == 'admin')
-          ? FloatingActionButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddLessonScreen()),
-                );
-                _loadLessons();
-              },
-              backgroundColor: Colors.deepPurpleAccent,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, size: 32),
-            )
-          : null,
+      floatingActionButton:
+          (_isLoggedIn && _userRole == 'admin')
+              ? FloatingActionButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddLessonScreen(),
+                    ),
+                  );
+                  _loadLessons();
+                },
+                backgroundColor: Colors.deepPurpleAccent,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add, size: 32),
+              )
+              : null,
     );
   }
 
-  Widget _buildStatCard({required IconData icon, required String label, required String value}) {
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Column(
       children: [
         Icon(icon, color: Colors.deepPurpleAccent, size: 24),
@@ -427,10 +520,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white60,
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: Colors.white60, fontSize: 11),
         ),
       ],
     );

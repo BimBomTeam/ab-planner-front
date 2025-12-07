@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ab_planner/models/group_model.dart';
 import 'package:ab_planner/models/program_model.dart';
 import 'package:ab_planner/models/student_selection_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:ab_planner/models/notification_model.dart';
+import 'package:ab_planner/models/user_model.dart';
 
 class UserService {
   static const String _baseUrl = 'http://193.122.12.41:8000/api/v1';
@@ -14,11 +16,13 @@ class UserService {
     final url = Uri.parse('$_baseUrl/programs');
     final response = await http.get(url);
 
-    print('fetchAllPrograms status: ${response.statusCode}');
+    debugPrint('fetchAllPrograms status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
-      return data.map((programJson) => ProgramModel.fromJson(programJson)).toList();
+      return data
+          .map((programJson) => ProgramModel.fromJson(programJson))
+          .toList();
     } else {
       throw Exception('Błąd ładowania programów');
     }
@@ -33,12 +37,10 @@ class UserService {
     final url = Uri.parse('$_baseUrl/groups');
     final response = await http.get(
       url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
 
-    print('fetchAllGroups status: ${response.statusCode}');
+    debugPrint('fetchAllGroups status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
@@ -49,7 +51,9 @@ class UserService {
   }
 
   /// DEPRECATED - stary endpoint, użyj fetchGroups() z nowymi parametrami
-  static Future<List<GroupModel>> fetchGroupsByStartYear(String startYear) async {
+  static Future<List<GroupModel>> fetchGroupsByStartYear(
+    String startYear,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
 
@@ -57,12 +61,10 @@ class UserService {
     final url = Uri.parse('$_baseUrl/groups/start-year/$encodedYear');
     final response = await http.get(
       url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
 
-    print('fetchGroupsByStartYear status: ${response.statusCode}');
+    debugPrint('fetchGroupsByStartYear status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
@@ -80,12 +82,10 @@ class UserService {
     final url = Uri.parse('$_baseUrl/groups/$groupId');
     final response = await http.get(
       url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
 
-    print('fetchOldGroupById status: ${response.statusCode}');
+    debugPrint('fetchOldGroupById status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -121,8 +121,8 @@ class UserService {
       body: json.encode(body),
     );
 
-    print('saveProfile status: ${response.statusCode}');
-    print('saveProfile response: ${response.body}');
+    debugPrint('saveProfile status: \${response.statusCode}');
+    debugPrint('saveProfile response: \${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Błąd zapisu danych');
@@ -136,23 +136,21 @@ class UserService {
   }
 
   /// Pobierz dane aktualnie zalogowanego użytkownika
-  static Future<Map<String, dynamic>> fetchCurrentUser() async {
+  static Future<User> fetchCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
 
     final url = Uri.parse('$_baseUrl/users/me');
     final response = await http.get(
       url,
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
 
-    print('fetchCurrentUser status: ${response.statusCode}');
-    print('fetchCurrentUser body: ${response.body}');
+    debugPrint('fetchCurrentUser status: \${response.statusCode}');
+    debugPrint('fetchCurrentUser body: \${response.body}');
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      return User.fromJson(json.decode(response.body));
     } else {
       throw Exception('Błąd pobierania danych użytkownika');
     }
@@ -161,23 +159,22 @@ class UserService {
   /// Pobierz dostępne kierunki (programy)
   static Future<List<Map<String, dynamic>>> fetchMajorsWithIds() async {
     final programs = await fetchAllPrograms();
-    return programs.map((program) => {
-      'id': program.id,
-      'name': program.name,
-    }).toList();
+    return programs
+        .map((program) => {'id': program.id, 'name': program.name})
+        .toList();
   }
 
   /// Pobierz unikalne roczniki z wszystkich programów
   static Future<List<int>> fetchStartYears() async {
     final programs = await fetchAllPrograms();
     final years = <int>{};
-    
+
     for (final program in programs) {
       for (final year in program.years) {
         years.add(year.year);
       }
     }
-    
+
     final yearsList = years.toList();
     yearsList.sort((a, b) => b.compareTo(a)); // Od najnowszego do najstarszego
     return yearsList;
@@ -201,13 +198,14 @@ class UserService {
       queryParams['group_type'] = groupType;
     }
 
-    final url = Uri.parse('$_baseUrl/programs/$programId/groups')
-        .replace(queryParameters: queryParams);
-    
+    final url = Uri.parse(
+      '$_baseUrl/programs/$programId/groups',
+    ).replace(queryParameters: queryParams);
+
     final response = await http.get(url);
 
-    print('fetchProgramGroups status: ${response.statusCode}');
-    print('fetchProgramGroups url: $url');
+    debugPrint('fetchProgramGroups status: \${response.statusCode}');
+    debugPrint('fetchProgramGroups url: \$url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
@@ -238,13 +236,14 @@ class UserService {
       queryParams['group_type'] = groupType;
     }
 
-    final url = Uri.parse('$_baseUrl/groups')
-        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-    
+    final url = Uri.parse(
+      '$_baseUrl/groups',
+    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
     final response = await http.get(url);
 
-    print('fetchGroups status: ${response.statusCode}');
-    print('fetchGroups url: $url');
+    debugPrint('fetchGroups status: \${response.statusCode}');
+    debugPrint('fetchGroups url: \$url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
@@ -256,10 +255,16 @@ class UserService {
 
   /// Pobierz szczegóły pojedynczej grupy po ID
   static Future<Group> fetchGroupById(int groupId) async {
-    final url = Uri.parse('$_baseUrl/groups/$groupId');
-    final response = await http.get(url);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-    print('fetchGroupById status: ${response.statusCode}');
+    final url = Uri.parse('$_baseUrl/groups/$groupId');
+    final response = await http.get(
+      url,
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+
+    debugPrint('fetchGroupById status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -278,17 +283,26 @@ class UserService {
       queryParams['user_id'] = userId.toString();
     }
 
-    final url = Uri.parse('$_baseUrl/student-group-selection')
-        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    final url = Uri.parse(
+      '$_baseUrl/student-group-selection',
+    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
-    final response = await http.get(url);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-    print('fetchStudentGroupSelections status: ${response.statusCode}');
-    print('fetchStudentGroupSelections url: $url');
+    final response = await http.get(
+      url,
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+
+    debugPrint('fetchStudentGroupSelections status: \${response.statusCode}');
+    debugPrint('fetchStudentGroupSelections url: \$url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
-      return data.map((selectionJson) => StudentGroupSelection.fromJson(selectionJson)).toList();
+      return data
+          .map((selectionJson) => StudentGroupSelection.fromJson(selectionJson))
+          .toList();
     } else {
       throw Exception('Błąd ładowania wyborów grup');
     }
@@ -308,14 +322,12 @@ class UserService {
 
     final response = await http.post(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: json.encode(body.toJson()),
     );
 
-    print('createStudentGroupSelection status: ${response.statusCode}');
-    print('createStudentGroupSelection body: ${response.body}');
+    debugPrint('createStudentGroupSelection status: \${response.statusCode}');
+    debugPrint('createStudentGroupSelection body: \${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = json.decode(response.body);
@@ -338,17 +350,20 @@ class UserService {
       queryParams['status'] = status;
     }
 
-    final url = Uri.parse('$_baseUrl/notifications')
-        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+    final url = Uri.parse(
+      '$_baseUrl/notifications',
+    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
     final response = await http.get(url);
 
-    print('fetchNotifications status: ${response.statusCode}');
-    print('fetchNotifications url: $url');
+    debugPrint('fetchNotifications status: \${response.statusCode}');
+    debugPrint('fetchNotifications url: \$url');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
-      return data.map((notificationJson) => Notification.fromJson(notificationJson)).toList();
+      return data
+          .map((notificationJson) => Notification.fromJson(notificationJson))
+          .toList();
     } else {
       throw Exception('Błąd ładowania powiadomień');
     }

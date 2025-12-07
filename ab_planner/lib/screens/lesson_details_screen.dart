@@ -49,7 +49,8 @@ class LessonDetailsScreen extends StatelessWidget {
       lecturerName = oldLesson.teacherName ?? 'Nieznany';
       lecturerEmail = 'brak';
       lessonType = oldLesson.lessonTypeName ?? 'Brak';
-      groupCode = '${oldLesson.groupName ?? "Brak"} (${oldLesson.groupNumber ?? "-"})';
+      groupCode =
+          '${oldLesson.groupName ?? "Brak"} (${oldLesson.groupNumber ?? "-"})';
       programName = 'Brak';
       specialization = 'Brak';
       capacity = 0;
@@ -73,11 +74,17 @@ class LessonDetailsScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1F38),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.deepPurpleAccent.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.school, color: Colors.deepPurpleAccent, size: 40),
+                    Icon(
+                      Icons.school,
+                      color: Colors.deepPurpleAccent,
+                      size: 40,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -85,15 +92,16 @@ class LessonDetailsScreen extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontSize: 22,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: Colors.white, fontSize: 22),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             lessonType,
-                            style: TextStyle(color: Colors.deepPurpleAccent, fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.deepPurpleAccent,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
@@ -102,17 +110,22 @@ class LessonDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Status
               _buildSectionTitle('Status', context),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1F38),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -126,18 +139,26 @@ class LessonDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Sekcja: Czas i miejsce
               _buildSectionTitle('Czas i miejsce', context),
               const SizedBox(height: 12),
               _buildInfoCard([
-                _buildInfoRow(Icons.calendar_today, 'Data', dateFormat.format(startTime)),
-                _buildInfoRow(Icons.access_time, 'Godziny', '${timeFormat.format(startTime)} – ${timeFormat.format(endTime)}'),
+                _buildInfoRow(
+                  Icons.calendar_today,
+                  'Data',
+                  dateFormat.format(startTime),
+                ),
+                _buildInfoRow(
+                  Icons.access_time,
+                  'Godziny',
+                  '${timeFormat.format(startTime)} – ${timeFormat.format(endTime)}',
+                ),
                 _buildInfoRow(Icons.meeting_room, 'Sala', room),
                 _buildInfoRow(Icons.people, 'Pojemność sali', '$capacity osób'),
               ]),
               const SizedBox(height: 24),
-              
+
               // Sekcja: Prowadzący
               _buildSectionTitle('Prowadzący', context),
               const SizedBox(height: 12),
@@ -146,14 +167,18 @@ class LessonDetailsScreen extends StatelessWidget {
                 _buildInfoRow(Icons.email, 'Email', lecturerEmail),
               ]),
               const SizedBox(height: 24),
-              
+
               // Sekcja: Grupa
               _buildSectionTitle('Grupa', context),
               const SizedBox(height: 12),
               _buildInfoCard([
                 _buildInfoRow(Icons.groups, 'Kod grupy', groupCode),
                 _buildInfoRow(Icons.school_outlined, 'Kierunek', programName),
-                _buildInfoRow(Icons.auto_awesome, 'Specjalizacja', specialization),
+                _buildInfoRow(
+                  Icons.auto_awesome,
+                  'Specjalizacja',
+                  specialization,
+                ),
               ]),
             ],
           ),
@@ -179,11 +204,9 @@ class LessonDetailsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1F38),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
