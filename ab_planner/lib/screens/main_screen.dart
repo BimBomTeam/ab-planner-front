@@ -5,6 +5,8 @@ import 'package:ab_planner/screens/add_lesson_screen.dart';
 import 'package:ab_planner/screens/edit_lesson_screen.dart';
 import 'package:ab_planner/services/lesson_service.dart';
 import 'package:ab_planner/services/user_service.dart';
+import 'package:ab_planner/services/notification_service.dart';
+import 'package:ab_planner/screens/notification_list_screen.dart';
 import 'package:ab_planner/widgets/lesson_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -26,12 +28,17 @@ class _MainScreenState extends State<MainScreen> {
   bool _isLoadingLessons = false;
   List<LessonV1> _lessons = [];
   String? _userRole;
+  int _unreadNotificationsCount = 0;
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('pl_PL', null);
-    _checkLoginStatus().then((_) => _loadLessons());
+    initializeDateFormatting('pl_PL', null);
+    _checkLoginStatus().then((_) {
+      _loadLessons();
+      _checkNotifications();
+    });
   }
 
   Future<void> _checkLoginStatus() async {
@@ -56,6 +63,24 @@ class _MainScreenState extends State<MainScreen> {
         _isLoggedIn = false;
         _userRole = null;
       });
+    }
+  }
+
+  Future<void> _checkNotifications() async {
+    if (!_isLoggedIn) return;
+    try {
+      final user = await UserService.fetchCurrentUser();
+      final notifications = await NotificationService.fetchNotifications(
+        userId: user.id,
+        readStatus: 'unread',
+      );
+      if (mounted) {
+        setState(() {
+          _unreadNotificationsCount = notifications.length;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking notifications: $e');
     }
   }
 
@@ -244,6 +269,49 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationListScreen(),
+                ),
+              );
+              _checkNotifications(); // Refresh on return
+            },
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications, color: Colors.white),
+                if (_unreadNotificationsCount > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '$_unreadNotificationsCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            tooltip: 'Powiadomienia',
+          ),
           if (!isToday)
             IconButton(
               icon: const Icon(Icons.today, color: Colors.deepPurpleAccent),

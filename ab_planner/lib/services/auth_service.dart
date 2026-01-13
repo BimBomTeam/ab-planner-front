@@ -20,7 +20,7 @@ class LoginParams {
 }
 
 class AuthService {
-  static const String _apiBaseUrl = 'http://193.122.12.41:8000/api/v1';
+  static const String _apiBaseUrl = 'http://130.61.233.185:8000/api/v1';
   // Note: For WebView, the redirect URI here must match what the backend expects/allows.
   // Using localhost is fine as we intercept it.
   static const String _redirectUri = 'http://localhost:8080/auth/callback';

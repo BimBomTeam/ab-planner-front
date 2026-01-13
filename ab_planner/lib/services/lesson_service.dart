@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:ab_planner/models/lesson.dart';
 
 class LessonService {
-  // static const String _baseUrl = 'http://193.122.12.41:8000/api/v1/lessons'; // Unused
-  static const String _oldBaseUrl = 'http://193.122.12.41:3000/api/lessons';
+  // static const String _baseUrl = 'http://130.61.233.185:8000/api/v1/lessons'; // Unused
+  static const String _oldBaseUrl = 'http://130.61.233.185:8000/api/lessons';
 
   static int? _cachedGroupId;
 
@@ -38,7 +38,7 @@ class LessonService {
     }
 
     final url = Uri.parse(
-      'http://193.122.12.41:8000/api/v1/lessons',
+      'http://130.61.233.185:8000/api/v1/lessons',
     ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
     debugPrint('🌍 Fetching lessons from: $url');
@@ -54,6 +54,9 @@ class LessonService {
     debugPrint('📩 Response status: ${response.statusCode}');
 
     if (response.statusCode == 200) {
+      debugPrint(
+        '📩 Raw Response Body: ${response.body}',
+      ); // <--- ADDED LOGGING
       final List<dynamic> data = json.decode(response.body);
       debugPrint('📦 Fetched ${data.length} lessons');
       return data.map((json) => LessonV1.fromJson(json)).toList();
@@ -74,7 +77,7 @@ class LessonService {
     final token = await _getToken();
 
     final response = await http.get(
-      Uri.parse('http://193.122.12.41:3000/api/users/me'),
+      Uri.parse('http://130.61.233.185:8000/api/users/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

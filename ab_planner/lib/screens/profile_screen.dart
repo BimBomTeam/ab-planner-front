@@ -4,6 +4,7 @@ import 'package:ab_planner/models/user_model.dart';
 import 'package:ab_planner/screens/main_screen.dart';
 import 'package:ab_planner/services/user_service.dart';
 import 'package:ab_planner/services/auth_service.dart';
+import 'package:ab_planner/widgets/group_selection_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -115,6 +116,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _showGroupSelectionDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => const GroupSelectionDialog(),
+    );
+
+    if (result == true) {
+      _loadUserData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,10 +183,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       TextFormField(
                         controller: _groupController,
                         readOnly: true,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Grupa',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.group_outlined),
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.group_outlined),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: _showGroupSelectionDialog,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),

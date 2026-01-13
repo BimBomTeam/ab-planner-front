@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "336630992100",
+    "project_id": "ab-planner-test-client",
+    "storage_bucket": "ab-planner-test-client.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:336630992100:android:4860e2c76e5f47d10b30f1",
+        "android_client_info": {
+          "package_name": "com.abplanner.testclient"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPlWDef_L8trG3e3PDJRKO6RovMGyXZXQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

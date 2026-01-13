@@ -2,8 +2,11 @@ import 'package:ab_planner/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:ab_planner/services/fcm_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FCMService.initialize();
   runApp(const MainApp());
 }
 
@@ -39,9 +42,7 @@ final ThemeData customLoginTheme = ThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: Color(0xFF3A0CA3),
       foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       padding: const EdgeInsets.symmetric(vertical: 16),
       textStyle: TextStyle(fontWeight: FontWeight.bold),
     ),
@@ -52,9 +53,7 @@ final ThemeData customLoginTheme = ThemeData(
       backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       side: const BorderSide(color: Colors.white30),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       padding: const EdgeInsets.symmetric(vertical: 16),
       textStyle: const TextStyle(fontWeight: FontWeight.bold),
     ),
@@ -63,7 +62,6 @@ final ThemeData customLoginTheme = ThemeData(
   iconTheme: const IconThemeData(color: Colors.white70),
 );
 
-
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -71,18 +69,15 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       builder: (context, child) {
-    return SafeArea(child: child!);
-  },
+        return SafeArea(child: child!);
+      },
       theme: customLoginTheme,
-      localizationsDelegates:  const [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales:  const [
-        Locale('pl', 'PL'), 
-        Locale('en', 'US'), 
-      ],
+      supportedLocales: const [Locale('pl', 'PL'), Locale('en', 'US')],
       home: SafeArea(child: const MainScreen()),
     );
   }

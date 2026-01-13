@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ab_planner/services/auth_service.dart';
 import 'package:ab_planner/screens/main_screen.dart';
 import 'package:ab_planner/screens/microsoft_login_webview.dart';
+import 'package:ab_planner/services/fcm_service.dart';
 
 class LogInScreen extends StatefulWidget {
   const LogInScreen({super.key});
@@ -50,6 +51,12 @@ class _LogInScreenState extends State<LogInScreen> {
         if (result.containsKey('code')) {
           final code = result['code'];
           await AuthService.exchangeToken(code, params.verifier);
+
+          try {
+            await FCMService.uploadToken();
+          } catch (e) {
+            debugPrint('Failed to upload FCM token: $e');
+          }
 
           if (!mounted) return;
 

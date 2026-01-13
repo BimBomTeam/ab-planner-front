@@ -5,21 +5,27 @@ import 'package:ab_planner/models/group_model.dart';
 import 'package:ab_planner/models/program_model.dart';
 import 'package:ab_planner/models/student_selection_model.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ab_planner/models/notification_model.dart';
+
 import 'package:ab_planner/models/user_model.dart';
 
 class UserService {
-  static const String _baseUrl = 'http://193.122.12.41:8000/api/v1';
+  static const String _baseUrl = 'http://130.61.233.185:8000/api/v1';
 
   /// Pobierz wszystkie programy (kierunki) z rocznikiami i specjalizacjami
   static Future<List<ProgramModel>> fetchAllPrograms() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
     final url = Uri.parse('$_baseUrl/programs');
-    final response = await http.get(url);
+    final response = await http.get(
+      url,
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
 
     debugPrint('fetchAllPrograms status: \${response.statusCode}');
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body) as List;
+      final data = json.decode(utf8.decode(response.bodyBytes)) as List;
       return data
           .map((programJson) => ProgramModel.fromJson(programJson))
           .toList();
@@ -150,7 +156,7 @@ class UserService {
     debugPrint('fetchCurrentUser body: \${response.body}');
 
     if (response.statusCode == 200) {
-      return User.fromJson(json.decode(response.body));
+      return User.fromJson(json.decode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception('Błąd pobierania danych użytkownika');
     }
@@ -202,7 +208,13 @@ class UserService {
       '$_baseUrl/programs/$programId/groups',
     ).replace(queryParameters: queryParams);
 
-    final response = await http.get(url);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    final response = await http.get(
+      url,
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
 
     debugPrint('fetchProgramGroups status: \${response.statusCode}');
     debugPrint('fetchProgramGroups url: \$url');
@@ -246,7 +258,7 @@ class UserService {
     debugPrint('fetchGroups url: \$url');
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body) as List;
+      final data = json.decode(utf8.decode(response.bodyBytes)) as List;
       return data.map((groupJson) => Group.fromJson(groupJson)).toList();
     } else {
       throw Exception('Błąd ładowania grup');
@@ -320,9 +332,15 @@ class UserService {
       userId: userId,
     );
 
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
       body: json.encode(body.toJson()),
     );
 
@@ -333,39 +351,11 @@ class UserService {
       final data = json.decode(response.body);
       return StudentGroupSelection.fromJson(data);
     } else {
-      throw Exception('Błąd tworzenia wyboru grupy');
+      throw Exception(
+        'Błąd tworzenia wyboru grupy: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
   /// Pobierz powiadomienia
-  static Future<List<Notification>> fetchNotifications({
-    int? userId,
-    String? status,
-  }) async {
-    final queryParams = <String, String>{};
-    if (userId != null) {
-      queryParams['user_id'] = userId.toString();
-    }
-    if (status != null) {
-      queryParams['status'] = status;
-    }
-
-    final url = Uri.parse(
-      '$_baseUrl/notifications',
-    ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-
-    final response = await http.get(url);
-
-    debugPrint('fetchNotifications status: \${response.statusCode}');
-    debugPrint('fetchNotifications url: \$url');
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body) as List;
-      return data
-          .map((notificationJson) => Notification.fromJson(notificationJson))
-          .toList();
-    } else {
-      throw Exception('Błąd ładowania powiadomień');
-    }
-  }
 }
